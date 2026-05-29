@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Adspire</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ── Backgrounds ── */
+  --bg:#08070e; --s1:rgba(255,255,255,0.045); --s2:rgba(255,255,255,0.065); --s3:rgba(255,255,255,0.09);
+  --b1:rgba(255,255,255,0.08); --b2:rgba(255,255,255,0.13);
+  /* ── Text ── */
+  --t1:#f0f0f5; --t2:rgba(255,255,255,0.42); --t3:rgba(255,255,255,0.18);
+  /* ── Accent: chartreuse yellow-green ── */
+  --accent:#C8E040; --accent-text:#0c0c0c; --accent-dim:rgba(200,224,64,0.13);
+  /* Keep blue for content metadata tags, accent for buttons/actions */
+  --blue:#3b82f6; --blue2:#60a5fa; --blue3:rgba(59,130,246,0.10);
+  /* ── Content tag colors ── */
+  --gold:#c9a96e; --green:#34d399; --amber:#f59e0b;
+  --red:#f87171; --pink:#ec4899; --cyan:#22d3ee; --purple:#a78bfa;
+  /* ── Glow ── */
+  --glow-purple:rgba(90,40,200,0.28);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#030209;display:flex;justify-content:center;align-items:center;
+  min-height:100vh;font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;}
+
+/* ─ Phone ─ */
+#phone{width:393px;height:852px;
+  background:radial-gradient(ellipse at 50% 0%, rgba(90,40,200,0.28) 0%, #08070e 55%);
+  border-radius:50px;overflow:hidden;position:relative;flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.10),0 40px 100px #000,0 0 90px rgba(90,40,200,0.14);}
+.island{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  width:120px;height:36px;background:#000;border-radius:20px;z-index:100;}
+
+/* ─ Screens ─ */
+.screen{display:none;flex-direction:column;height:100%;position:absolute;inset:0;}
+.screen.active{display:flex;}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+/* Global status bar — sits at Dynamic Island level, one instance for all screens */
+.topbar{position:absolute;top:0;left:0;right:0;height:54px;display:flex;
+  align-items:center;justify-content:space-between;
+  padding:15px 26px 0;font-size:13px;font-weight:600;color:var(--t1);
+  z-index:50;pointer-events:none;}
+/* App-level header bar — sits below the Dynamic Island area */
+.sbar{display:flex;justify-content:space-between;align-items:center;
+  padding:60px 24px 0;font-size:13px;font-weight:600;color:var(--t1);flex-shrink:0;}
+
+/* ─ Bottom nav — floating glass pill ─ */
+.bnav{display:flex;align-items:center;justify-content:space-around;
+  margin:0 14px 22px;padding:9px 8px;
+  border-radius:28px;
+  background:rgba(14,11,22,0.70);
+  backdrop-filter:blur(32px) saturate(180%);
+  -webkit-backdrop-filter:blur(32px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.09);
+  border-top-color:rgba(255,255,255,0.16);
+  box-shadow:
+    0 0 90px rgba(100,50,220,0.22),
+    0 0 36px rgba(80,40,200,0.15),
+    0 16px 40px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.11);
+  flex-shrink:0;position:relative;overflow:visible;z-index:20;}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  cursor:pointer;opacity:0.35;transition:all 0.22s;color:var(--t1);
+  padding:0;border-radius:18px;}
+.bni.on{opacity:1;}
+.bni.on .bni-inner{background:rgba(255,255,255,0.08);border-radius:18px;}
+.bni-inner{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 38px;border-radius:18px;transition:background 0.22s;}
+.bni svg,.bni-inner svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;}
+.bni.on .bni-inner svg{stroke:var(--t1);}
+.bni-label{font-size:10px;font-weight:500;color:inherit;}
+.bni.on .bni-label{color:var(--t1);}
+/* FAB lives inside the pill — accent circle, inline in flex flow */
+.bnav-fab{width:46px;height:46px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-shrink:0;margin:0 4px;
+  box-shadow:0 0 24px rgba(200,224,64,0.55),0 0 8px rgba(200,224,64,0.3),0 4px 12px rgba(0,0,0,0.4);}
+.bnav-fab svg{stroke:var(--accent-text);width:20px;height:20px;stroke-width:2.5;}
+.bnav-arc{display:none;}
+
+/* ─ Action bar ─ */
+.abar{padding:12px 20px;background:rgba(8,7,14,0.97);backdrop-filter:blur(24px);
+  border-top:1px solid var(--b1);flex-shrink:0;display:flex;gap:10px;}
+
+/* ─ Buttons ─ */
+.bp{background:var(--accent);border:none;border-radius:14px;padding:14px;
+  font-size:14px;font-weight:700;color:var(--accent-text);
+  cursor:pointer;letter-spacing:-0.2px;width:100%;transition:opacity 0.15s;}
+.bp:active{opacity:0.82;}
+.bg{background:var(--s1);border:1px solid var(--b1);border-radius:14px;
+  padding:14px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;}
+
+/* ─ Inputs ─ */
+.inp{background:var(--s2);border:1px solid var(--b2);border-radius:12px;
+  padding:12px 14px;font-size:13px;color:var(--t1);width:100%;outline:none;
+  font-family:inherit;transition:border-color 0.2s;}
+.inp:focus{border-color:rgba(200,224,64,0.4);}
+.inp::placeholder{color:var(--t3);}
+textarea.inp{resize:none;line-height:1.6;}
+.lbl{font-size:13px;color:var(--t2);font-weight:600;margin-bottom:6px;
+  letter-spacing:0.3px;display:block;}
+
+/* ─ Mode toggle ─ */
+.seg{display:flex;background:var(--s2);border-radius:12px;padding:3px;gap:2px;margin-bottom:20px;}
+.seg-btn{flex:1;padding:9px;border-radius:10px;font-size:12px;font-weight:600;
+  color:var(--t2);background:none;border:none;cursor:pointer;transition:all 0.2s;}
+.seg-btn.on{background:var(--s3);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+
+/* ─ Platform chips ─ */
+.pchip{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:10px;
+  border:1.5px solid var(--b1);background:var(--s2);font-size:11px;font-weight:500;
+  color:var(--t2);cursor:pointer;transition:all 0.15s;}
+.pchip.on{border-color:rgba(200,224,64,0.45);background:var(--accent-dim);color:var(--accent);}
+
+/* ─ Platform cards ─ */
+.plt-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:16px 10px;border-radius:14px;border:1.5px solid transparent;background:var(--s2);
+  cursor:pointer;transition:all 0.15s;text-align:center;color:#fff;}
+.plt-card.on{border-color:var(--accent);background:rgba(200,224,64,0.08);color:#fff;}
+.plt-card:active{opacity:0.7;}
+.crop-opt{flex:1;padding:10px 8px;border-radius:12px;background:var(--s2);border:1.5px solid transparent;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);transition:all 0.15s;}
+.crop-opt.on{border-color:var(--accent);background:rgba(200,224,64,0.08);color:var(--accent);}
+.crop-opt:active{opacity:0.7;}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#fb7185;}
+.insight-filter{font-size:11px;font-weight:600;padding:6px 14px;border-radius:99px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.08);transition:all 0.2s;}
+.insight-filter.on{background:#fff;color:#0c0c0c;}
+
+/* ─ Upload zone ─ */
+.upload-zone{border:2px dashed rgba(255,255,255,0.08);border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:32px 20px;cursor:pointer;transition:border-color 0.2s;background:rgba(255,255,255,0.06);}
+.upload-zone:hover{border-color:rgba(200,224,64,0.35);}
+.upload-zone.has-img{border-color:rgba(200,224,64,0.45);border-style:solid;}
+
+/* ─ Copy cards ─ */
+.ccard{background:var(--s1);border:1px solid var(--b1);border-radius:16px;
+  padding:14px 15px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;}
+.ccard:active{border-color:var(--accent);}
+.ccard.sel{border-color:var(--accent);background:var(--accent-dim);}
+.ptag{display:inline-flex;align-items:center;font-size:10px;font-weight:600;
+  padding:3px 9px;border-radius:99px;}
+
+/* ─ Project cards ─ */
+.pcard{display:flex;align-items:center;gap:12px;padding:14px;
+  background:var(--s1);border:1px solid var(--b1);border-radius:16px;
+  margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;}
+.pcard:active{border-color:var(--accent);}
+
+/* ─ Tab bar ─ */
+.tbar{display:flex;border-bottom:1px solid var(--b1);padding:0 20px;flex-shrink:0;}
+.tbtn{padding:10px 0;margin-right:22px;font-size:12px;font-weight:500;color:var(--t3);
+  border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;}
+.tbtn.on{color:var(--t1);border-bottom-color:var(--accent);}
+
+/* ─ Agent status ─ */
+.ag-row{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--s1);border:1px solid var(--b1);border-radius:14px;margin-bottom:8px;}
+.ag-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:19px;flex-shrink:0;border:2px solid;}
+
+/* ─ Strategy ─ */
+.sblock{background:var(--s1);border:1px solid var(--b1);border-radius:14px;
+  padding:14px;margin-bottom:10px;}
+.mbar{height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-top:5px;}
+.mfill{height:100%;border-radius:99px;}
+
+/* ─ Trend card ─ */
+.tcard{border-radius:16px;overflow:hidden;position:relative;cursor:pointer;
+  background:var(--s2);border:1px solid var(--b1);}
+.tcard:active{opacity:0.8;}
+
+/* ─ Animations ─ */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+.pulse{animation:pulse 1.5s ease-in-out infinite;}
+.fadeup{animation:fadeUp 0.35s ease-out both;}
+.cursor::after{content:'▋';animation:blink 1s infinite;color:var(--gold);font-size:10px;}
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(70px);}
+
+</style>
+</head>
+<body>
+<div id="phone">
+<div class="island"></div>
+<!-- Global status bar: time left of island, icons right — sits at Dynamic Island level -->
+<div class="topbar">
+  <span>9:41</span>
+  <div style="display:flex;gap:5px;align-items:center;font-size:14px;"><span>●●●</span><span>▲</span><span style="font-size:12px;font-weight:700;">100%</span></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: 发现 (TAB 1 - STACKED CARDS)
+════════════════════════════════ -->
+<div id="s-create" class="screen active" style="background:var(--bg);position:relative;overflow:hidden;">
+  <div class="orb" style="width:380px;height:380px;background:rgba(90,40,200,0.22);top:-150px;left:50%;transform:translateX(-50%);"></div>
+
+  <!-- Status bar: Adspire wordmark left, bell right -->
+  <div class="sbar" style="position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;">
+      <div style="display:inline-flex;align-items:baseline;gap:0;line-height:1;">
+        <span style="font-size:26px;font-weight:900;color:#C8E040;letter-spacing:-1px;font-style:italic;">A</span><span style="font-size:22px;font-weight:900;color:var(--t1);letter-spacing:-0.5px;">dspire</span>
+      </div>
+    </div>
+    <div onclick="goTo('s-notif')" style="width:34px;height:34px;border-radius:50%;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div id="notif-badge" style="position:absolute;top:6px;right:6px;width:7px;height:7px;background:#fb7185;border-radius:50%;"></div>
+    </div>
+  </div>
+
+  <!-- Big greeting headline -->
+  <div style="padding:20px 24px 0;position:relative;z-index:1;">
+    <div style="font-size:40px;font-weight:900;color:var(--t1);letter-spacing:-2px;line-height:1.15;">今天我们</div>
+    <div style="font-size:40px;font-weight:900;color:var(--t1);letter-spacing:-2px;line-height:1.15;">创作什么？</div>
+  </div>
+
+  <!-- AI Tools section -->
+  <div style="padding:20px 24px 0;position:relative;z-index:1;flex-shrink:0;">
+    <div style="font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-0.3px;margin-bottom:14px;">AI 创作</div>
+    <div style="display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px;">
+
+      <div onclick="goTo('s-brief')" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#2d1060,#5020a0);display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:500;">广告创作</span>
+      </div>
+
+      <div onclick="goTo('s-resize')" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#0d2e1a,#1a5c30);display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 9 9 9 3"/><polyline points="21 15 15 15 15 21"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:500;">尺寸适配</span>
+      </div>
+
+      <div onclick="goTo('s-style')" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#2e1a00,#6b3d00);display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:500;">风格迁移</span>
+      </div>
+
+      <div onclick="goTo('s-insight')" style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,#0d1e40,#1a3a80);display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:500;">投放记录</span>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- Stacked card deck: title + stack together, both anchored to bottom -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:0 24px 28px;position:relative;z-index:1;">
+    <div style="font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-0.3px;margin-bottom:14px;">热门创意</div>
+    <!-- Category filter chips -->
+    <div id="chip-row" style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+      <div class="fchip active" onclick="filterCategory(this,'全部')" style="background:#fff;border-radius:99px;padding:7px 16px;font-size:13px;font-weight:600;color:#0c0c0c;white-space:nowrap;flex-shrink:0;cursor:pointer;">全部</div>
+      <div class="fchip" onclick="filterCategory(this,'护肤')" style="background:rgba(255,255,255,0.08);border-radius:99px;padding:7px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;cursor:pointer;">护肤</div>
+      <div class="fchip" onclick="filterCategory(this,'科技')" style="background:rgba(255,255,255,0.08);border-radius:99px;padding:7px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;cursor:pointer;">科技</div>
+      <div class="fchip" onclick="filterCategory(this,'时尚')" style="background:rgba(255,255,255,0.08);border-radius:99px;padding:7px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;cursor:pointer;">时尚</div>
+      <div class="fchip" onclick="filterCategory(this,'健康')" style="background:rgba(255,255,255,0.08);border-radius:99px;padding:7px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;cursor:pointer;">健康</div>
+      <div class="fchip" onclick="filterCategory(this,'食品')" style="background:rgba(255,255,255,0.08);border-radius:99px;padding:7px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap;flex-shrink:0;cursor:pointer;">食品</div>
+    </div>
+    <div id="discover-stack" onclick="cycleDiscover()" style="position:relative;height:248px;cursor:pointer;">
+
+      <!-- dc-3: deepest back — peeks 36px above front card -->
+      <div id="dc-3" style="position:absolute;bottom:0;left:24px;right:24px;height:235px;border-radius:22px;z-index:1;opacity:0.36;transition:all 0.5s cubic-bezier(0.34,1.2,0.64,1);background:linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.55)) center/cover, url(https://images.unsplash.com/photo-1708667027894-6e9481ae1baf?w=800&h=418&fit=crop&auto=format) center/cover no-repeat;overflow:hidden;">
+        <div style="position:absolute;top:14px;left:16px;right:16px;">
+          <div data-field="preview-cat" style="font-size:8px;font-weight:700;letter-spacing:2.5px;color:rgba(255,255,255,0.08);text-transform:uppercase;margin-bottom:4px;">WELLNESS</div>
+          <div data-field="preview-brand" style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1;">VITALIS</div>
+        </div>
+      </div>
+
+      <!-- dc-2: middle back — peeks 22px above front card -->
+      <div id="dc-2" style="position:absolute;bottom:0;left:16px;right:16px;height:223px;border-radius:22px;z-index:2;opacity:0.55;transition:all 0.5s cubic-bezier(0.34,1.2,0.64,1);background:linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.55)) center/cover, url(https://images.unsplash.com/photo-1603189343302-e603f7add05a?w=800&h=418&fit=crop&auto=format) center/cover no-repeat;overflow:hidden;">
+        <div style="position:absolute;top:14px;left:16px;right:16px;">
+          <div data-field="preview-cat" style="font-size:8px;font-weight:700;letter-spacing:2.5px;color:rgba(255,255,255,0.08);text-transform:uppercase;margin-bottom:4px;">FASHION</div>
+          <div data-field="preview-brand" style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1;">ÉDITION</div>
+        </div>
+      </div>
+
+      <!-- dc-1: second card — peeks 12px above front card -->
+      <div id="dc-1" style="position:absolute;bottom:0;left:8px;right:8px;height:211px;border-radius:22px;z-index:3;opacity:0.74;transition:all 0.5s cubic-bezier(0.34,1.2,0.64,1);background:linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.55)) center/cover, url(https://images.unsplash.com/photo-1658216768198-92d71d6a72c9?w=800&h=418&fit=crop&auto=format) center/cover no-repeat;overflow:hidden;">
+        <div style="position:absolute;top:14px;left:16px;right:16px;">
+          <div data-field="preview-cat" style="font-size:8px;font-weight:700;letter-spacing:2.5px;color:rgba(255,255,255,0.08);text-transform:uppercase;margin-bottom:4px;">TECH</div>
+          <div data-field="preview-brand" style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1;">NEXUS PRO</div>
+        </div>
+      </div>
+
+      <!-- dc-0: front card — 16:9 landscape (353×199px) -->
+      <div id="dc-0" style="position:absolute;bottom:0;left:0;right:0;height:199px;border-radius:22px;z-index:4;opacity:1;will-change:transform;background:linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.35)) center/cover, url(card1-bg.png) center/cover no-repeat;overflow:hidden;">
+        <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;height:52px;background:rgba(0,0,0,0.32);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,0.08);border-radius:0 0 22px 22px;display:flex;align-items:center;padding:0 14px;gap:8px;">
+          <div id="dc-source" style="font-size:10px;color:rgba(255,255,255,0.5);flex:1;">来源：Pinterest</div>
+          <div onclick="genSimilar(CARDS[discoverIdx])" style="background:var(--accent);border-radius:10px;padding:8px 14px;font-size:11px;font-weight:700;color:var(--accent-text);white-space:nowrap;flex-shrink:0;">生成同款</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav with protruding FAB -->
+  <div class="bnav">
+    <div class="bni on">
+      <div class="bni-inner">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <div class="bni-label">发现</div>
+      </div>
+    </div>
+    <div class="bnav-fab" onclick="goTo('s-brief')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <div class="bni" onclick="goTo('s-mine')">
+      <div class="bni-inner">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <div class="bni-label">项目</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: PROCESSING
+════════════════════════════════ -->
+<div id="s-process" class="screen" style="background:var(--bg);">
+  <div class="orb" style="width:220px;height:220px;background:rgba(59,130,246,0.1);top:80px;left:-40px;"></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 22px;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:40px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--b1);border-radius:99px;padding:6px 16px;margin-bottom:16px;">
+        <span id="proc-product-label" style="font-size:12px;color:var(--t2);">生成中...</span>
+      </div>
+      <div style="font-size:23px;font-weight:700;color:var(--t1);letter-spacing:-0.5px;">AI 正在生成方案</div>
+      <div id="proc-sub" style="font-size:13px;color:var(--t2);margin-top:6px;">Copy Agent 分析中...</div>
+    </div>
+    <div class="ag-row" id="ag1">
+      <div class="ag-av pulse" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.35);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--t1);">Copy Agent</div><div id="ag1-s" style="font-size:11px;color:var(--blue2);margin-top:2px;">生成多角度文案 + 心理学标签...</div></div>
+      <div id="ag1-c" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+    <div class="ag-row" id="ag2" style="opacity:0.3;">
+      <div class="ag-av" style="background:rgba(201,169,110,0.12);border-color:rgba(201,169,110,0.3);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a96e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--t1);">Creative Agent</div><div id="ag2-s" style="font-size:11px;color:var(--t2);margin-top:2px;">等待中</div></div>
+      <div id="ag2-c" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+    <div class="ag-row" id="ag3" style="opacity:0.3;">
+      <div class="ag-av" style="background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.3);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      </div>
+      <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--t1);">Strategy Agent</div><div id="ag3-s" style="font-size:11px;color:var(--t2);margin-top:2px;">等待中</div></div>
+      <div id="ag3-c" style="display:none;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>
+    <div style="margin-top:32px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:8px;">
+        <span id="proc-step">生成广告文案...</span><span id="proc-pct">33%</span>
+      </div>
+      <div style="height:4px;background:var(--s2);border-radius:99px;overflow:hidden;">
+        <div id="proc-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--blue2));width:33%;transition:width 1s ease;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:60px;flex-shrink:0;"></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: OUTPUT DASHBOARD
+════════════════════════════════ -->
+<div id="s-output" class="screen" style="background:var(--bg);">
+  <div style="padding:62px 20px 0;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <button onclick="goTo('s-create')" style="background:var(--s1);border:1px solid var(--b1);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--t1);">‹</button>
+      <div style="flex:1;min-width:0;">
+        <div id="out-product-name" style="font-size:15px;font-weight:600;color:var(--t1);">透明质酸保湿霜</div>
+        <div id="out-meta-info" style="font-size:11px;color:var(--t2);">AI 生成广告方案</div>
+      </div>
+      <button onclick="exportImages()" style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:6px 12px;font-size:11px;color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出</button>
+    </div>
+  </div>
+  <div class="tbar">
+    <button class="tbtn on" id="tc-tab-btn" onclick="swtab(this,'tc')">文案 (15)</button>
+    <button class="tbtn" onclick="swtab(this,'tcr')">创意方向</button>
+    <button class="tbtn" onclick="swtab(this,'tst')">投放策略</button>
+  </div>
+
+  <!-- 文案 tab — dynamically populated -->
+  <div id="tc" class="scroll" style="padding:14px 16px 8px;">
+    <div id="tc-content">
+      <div style="display:flex;align-items:center;justify-content:center;height:120px;font-size:12px;color:var(--t3);">上传产品图后自动生成</div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+
+  <!-- 创意方向 tab -->
+  <div id="tcr" class="scroll" style="padding:14px 16px 8px;display:none;">
+    <!-- 广告创意区 - 3种风格 -->
+    <div id="out-ad-creative" style="display:none;margin-bottom:16px;">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">2 套广告创意</div>
+      <div id="ad-images-wrap"></div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+
+  <!-- 投放策略 tab — dynamically populated -->
+  <div id="tst" class="scroll" style="padding:14px 16px 8px;display:none;">
+    <div id="tst-content">
+      <div style="display:flex;align-items:center;justify-content:center;height:120px;font-size:12px;color:var(--t3);">上传产品图后自动生成</div>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+
+  <div class="abar"><button class="bg" onclick="openLaunchModal(_currentAdId)" style="flex:0 0 auto;padding:14px 16px;font-size:12px;font-weight:600;">标记</button><button class="bp" onclick="copyAllCopies()" style="flex:1;padding:14px;">复制全部文案</button></div>
+  <div style="height:28px;background:rgba(8,7,14,0.97);flex-shrink:0;"></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: COPY DETAIL
+════════════════════════════════ -->
+<div id="s-detail" class="screen" style="background:var(--bg);">
+  <div style="padding:62px 20px 14px;flex-shrink:0;border-bottom:1px solid var(--b1);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="goTo('s-output')" style="background:var(--s1);border:1px solid var(--b1);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--t1);">‹</button>
+      <div><div style="font-size:15px;font-weight:600;color:var(--t1);">文案详情</div><div style="font-size:11px;color:var(--t2);">痛点型 · Meta 版本</div></div>
+    </div>
+  </div>
+  <div class="scroll" style="padding:16px 16px 8px;">
+    <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:16px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--blue2);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">🧠 心理学分析</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;"><span class="ptag" style="background:rgba(248,113,113,0.12);color:var(--red);">痛点共鸣</span><span class="ptag" style="background:rgba(245,158,11,0.12);color:var(--amber);">好奇缺口</span></div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.8;margin-bottom:10px;">先用"10款"建立已有尝试感（引发共鸣），再用"可能不是产品问题"打破认知，"这个成分"制造好奇缺口，驱动点击。</div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--t2);">预测点击意愿</span><div style="flex:1;height:3px;background:var(--s2);border-radius:99px;overflow:hidden;"><div style="width:82%;height:100%;background:linear-gradient(90deg,var(--red),var(--amber));border-radius:99px;"></div></div><span style="font-size:11px;color:var(--amber);font-weight:600;">82%</span></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">文案原文</div>
+      <div style="font-size:14px;color:var(--t1);line-height:1.8;">"你试过10款保湿霜，每到秋天还是干到脱皮？可能不是产品问题，是你的皮肤缺了这个成分。"</div>
+      <button style="margin-top:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:8px;font-size:12px;color:var(--blue2);cursor:pointer;width:100%;font-weight:500;">📋 复制文案</button>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">平台适配版</div>
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--b1);"><div style="font-size:11px;color:var(--t2);margin-bottom:6px;">📘 Meta 标题</div><div style="font-size:12px;color:var(--t1);">10款保湿霜都试过，还是干？看这里。</div></div>
+      <div><div style="font-size:11px;color:var(--t2);margin-bottom:6px;">🌸 小红书钩子</div><div style="font-size:12px;color:var(--t1);">姐妹们！！我终于搞懂为什么保湿永远失败了😭原来不是产品问题...</div></div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+  <div class="abar"><button class="bg" style="flex:1;padding:12px;font-size:12px;" onclick="goTo('s-brief')">🔄 重新生成</button><button class="bp" style="flex:1;padding:12px;font-size:13px;" onclick="showCreative()">生成创意方向 →</button></div>
+  <div style="height:28px;background:rgba(8,7,14,0.97);flex-shrink:0;"></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: 我的 (TAB 3)
+════════════════════════════════ -->
+<div id="s-mine" class="screen" style="background:var(--bg);">
+  <!-- Giant title -->
+  <div style="padding:62px 22px 0;flex-shrink:0;">
+    <div style="font-size:40px;font-weight:900;color:var(--t1);letter-spacing:-2px;line-height:1.15;">项目</div>
+    <div style="font-size:13px;color:var(--t2);margin-top:8px;">0 个项目</div>
+  </div>
+
+  <!-- Search bar -->
+  <div style="padding:14px 22px 0;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:12px 16px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span style="font-size:14px;color:rgba(255,255,255,0.22);">搜索您的项目</span>
+    </div>
+  </div>
+
+  <!-- Filter chip -->
+  <div style="padding:14px 22px 0;flex-shrink:0;">
+    <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;background:#fff;cursor:pointer;">
+      <span style="font-size:13px;font-weight:700;color:#000;">全部</span>
+      <span style="background:#111;color:#fff;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:700;min-width:20px;text-align:center;">0</span>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px 20px;">
+    <div style="position:relative;width:252px;height:100px;margin-bottom:28px;flex-shrink:0;">
+      <div style="position:absolute;left:0;top:14px;width:68px;height:68px;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.65);transform:rotate(-16deg);transform-origin:bottom center;z-index:1;">
+        <div style="position:absolute;inset:0;background:linear-gradient(145deg,#0d3a30,#0e2e28);"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:28px;background:rgba(255,255,255,0.08);clip-path:polygon(0% 100%,30% 30%,50% 55%,70% 20%,100% 100%);"></div>
+        <div style="position:absolute;top:14px;right:14px;width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.08);"></div>
+      </div>
+      <div style="position:absolute;left:54px;top:4px;width:68px;height:68px;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.65);transform:rotate(-5deg);transform-origin:bottom center;z-index:2;">
+        <div style="position:absolute;inset:0;background:linear-gradient(145deg,#120820,#3a1060);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+          <svg width="34" height="24" viewBox="0 0 1024 700" fill="none"><path opacity="0.08" fill="white" d="M955.7 0H634.9c-47.8 0-81.9 54.6-47.8 81.9l143.4 143.4L512 436.9 402.8 334.5c-27.3-27.3-68.3-27.3-95.6 0L20.5 614.4c-27.3 27.3-27.3 68.3 0 95.6s68.3 27.3 95.6 0L355 477.9l102.4 102.4 6.8 6.8c27.3 27.3 68.3 27.3 95.6 0l259.4-266.2L935.3 437c34.1 34.1 88.7 0 88.7-47.8V68.3c0-41-27.3-68.3-68.3-68.3z"/></svg>
+          <div style="width:28px;height:4px;border-radius:3px;background:rgba(255,255,255,0.08);"></div>
+        </div>
+      </div>
+      <div style="position:absolute;left:112px;top:4px;width:68px;height:68px;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.65);transform:rotate(5deg);transform-origin:bottom center;z-index:3;">
+        <div style="position:absolute;inset:0;background:linear-gradient(145deg,#0a1628,#1a3060);"></div>
+        <div style="position:absolute;bottom:12px;left:10px;right:10px;display:flex;align-items:flex-end;gap:4px;height:32px;">
+          <div style="width:9px;flex-shrink:0;border-radius:2px 2px 0 0;background:rgba(255,255,255,0.08);height:45%;"></div>
+          <div style="width:9px;flex-shrink:0;border-radius:2px 2px 0 0;background:rgba(255,255,255,0.08);height:72%;"></div>
+          <div style="width:9px;flex-shrink:0;border-radius:2px 2px 0 0;background:rgba(255,255,255,0.08);height:100%;"></div>
+          <div style="width:9px;flex-shrink:0;border-radius:2px 2px 0 0;background:rgba(255,255,255,0.08);height:60%;"></div>
+        </div>
+      </div>
+      <div style="position:absolute;left:168px;top:14px;width:68px;height:68px;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.6);transform:rotate(16deg);transform-origin:bottom center;z-index:4;">
+        <div style="position:absolute;inset:0;background:linear-gradient(145deg,#1a1428,#302040);"></div>
+        <div style="position:absolute;top:10px;left:10px;right:10px;height:26px;border-radius:5px;background:rgba(255,255,255,0.08);"></div>
+        <div style="position:absolute;bottom:20px;left:10px;right:18px;height:4px;border-radius:3px;background:rgba(255,255,255,0.08);"></div>
+        <div style="position:absolute;bottom:13px;left:10px;right:24px;height:4px;border-radius:3px;background:rgba(255,255,255,0.08);"></div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:var(--t1);margin-bottom:10px;letter-spacing:-0.5px;">还没有项目</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.38);line-height:1.8;max-width:240px;margin:0 auto;text-align:center;">在首页创建你的第一个项目，<br>它会显示在这里。</div>
+    </div>
+  </div>
+
+  <!-- Nav with FAB -->
+  <div class="bnav">
+    <div class="bni" onclick="goTo('s-create')">
+      <div class="bni-inner">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <div class="bni-label">发现</div>
+      </div>
+    </div>
+    <div class="bnav-fab" onclick="goTo('s-brief')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <div class="bni on">
+      <div class="bni-inner">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <div class="bni-label">项目</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: BRIEF INPUT (产品信息)
+════════════════════════════════ -->
+<div id="s-brief" class="screen" style="background:var(--bg);">
+  <div class="orb" style="width:260px;height:260px;background:rgba(90,40,200,0.18);top:-80px;right:-60px;"></div>
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:12px;padding:62px 20px 20px;flex-shrink:0;position:relative;z-index:1;">
+    <button onclick="goTo('s-create')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);flex-shrink:0;line-height:1;">‹</button>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#fff;">开始创作</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);">上传即分析，3秒生成创意</div>
+    </div>
+  </div>
+
+  <div class="scroll" style="padding:0 20px;" id="brief-scroll">
+
+    <!-- ── 参考风格 Banner (hidden by default, shown when using 生成同款) ── -->
+    <div id="ref-card-banner" style="display:none;align-items:center;gap:10px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.28);border-radius:14px;padding:10px 12px;margin-bottom:16px;">
+      <div id="ref-card-thumb" style="width:38px;height:38px;border-radius:8px;flex-shrink:0;background-size:cover;background-position:center;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:9px;color:rgba(167,139,250,0.9);font-weight:700;letter-spacing:1.5px;margin-bottom:2px;">正在参考此风格</div>
+        <div id="ref-card-label" style="font-size:12px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      </div>
+      <button onclick="clearRefCard()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:18px;cursor:pointer;flex-shrink:0;padding:2px 4px;line-height:1;">✕</button>
+    </div>
+
+    <!-- ── Tab 切换 ── -->
+    <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:14px;padding:4px;margin-bottom:24px;flex-shrink:0;">
+      <div id="brief-tab-img" onclick="switchBriefTab('img')" style="flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#0c0c0c;transition:all 0.2s;">上传产品图</div>
+      <div id="brief-tab-url" onclick="switchBriefTab('url')" style="flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;color:rgba(255,255,255,0.45);transition:all 0.2s;">上传链接</div>
+    </div>
+
+    <!-- ── Tab 1: 上传产品图 ── -->
+    <div id="brief-panel-img">
+      <input type="file" id="real-file-input" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(this)">
+      <label class="upload-zone" id="brief-upload-zone" for="real-file-input" style="border-color:rgba(255,255,255,0.1);margin-bottom:24px;overflow:hidden;cursor:pointer;">
+        <div id="upload-placeholder" style="text-align:center;">
+          <div style="margin-bottom:10px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg></div>
+          <div style="font-size:14px;font-weight:600;color:#fff;">点击上传产品图片</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.22);margin-top:6px;">最多四张参考图</div>
+        </div>
+        <div id="upload-preview" style="display:none;width:100%;" onclick="event.preventDefault()">
+          <div id="upload-grid" style="display:grid;gap:5px;border-radius:12px;overflow:hidden;"></div>
+          <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+            <span style="font-size:11px;color:#34d399;display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg><span id="upload-count">1</span> 张已选择</span>
+            <button onclick="event.preventDefault();document.getElementById('real-file-input').click()" style="font-size:11px;color:rgba(255,255,255,0.45);background:none;border:none;cursor:pointer;padding:0;">+ 继续添加</button>
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <!-- ── Tab 2: 上传链接 ── -->
+    <div id="brief-panel-url" style="display:none;">
+      <div style="position:relative;margin-bottom:12px;">
+        <input class="inp" id="brief-url-input" placeholder="粘贴链接" style="padding-right:76px;">
+        <button onclick="fakeAnalyzeURL()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--accent);border:none;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:700;color:var(--accent-text);cursor:pointer;">解析</button>
+      </div>
+      <div style="margin-bottom:16px;margin-top:-6px;">
+        <span style="font-size:11px;color:rgba(255,255,255,0.25);">支持淘宝、小红书、京东、Shopify 等平台</span>
+      </div>
+      <div id="url-result" style="display:none;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:14px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>AI 已提取产品信息</div>
+        <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:4px;">透明质酸次抛精华</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:10px;">3种分子量透明质酸，深层补水，28天可见效</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:10px;background:rgba(59,130,246,0.12);color:var(--blue2);padding:3px 9px;border-radius:99px;">¥128/瓶</span>
+          <span style="font-size:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.08);padding:3px 9px;border-radius:99px;">护肤</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 投放平台 ── -->
+    <div style="margin-bottom:16px;">
+      <label class="lbl" style="color:#fff;margin-bottom:12px;font-size:15px;">投放平台</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="plt-card on" onclick="selectPlatform('instagram',this)">
+          <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+            <div style="width:16px;height:16px;background:#fff;border-radius:2px;"></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px;">Instagram / 微信</div>
+          <div style="font-size:9px;opacity:0.5;margin-top:-2px;">1:1 · 1080×1080</div>
+        </div>
+        <div class="plt-card" onclick="selectPlatform('xhs',this)">
+          <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+            <div style="width:12px;height:16px;background:#fff;border-radius:2px;"></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px;">小红书</div>
+          <div style="font-size:9px;opacity:0.5;margin-top:-2px;">3:4 · 1242×1656</div>
+        </div>
+        <div class="plt-card" onclick="selectPlatform('facebook',this)">
+          <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+            <div style="width:13px;height:16px;background:#fff;border-radius:2px;"></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px;">Facebook / Meta</div>
+          <div style="font-size:9px;opacity:0.5;margin-top:-2px;">4:5 · 1080×1350</div>
+        </div>
+        <div class="plt-card" onclick="selectPlatform('tiktok',this)">
+          <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+            <div style="width:9px;height:16px;background:#fff;border-radius:2px;"></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px;">抖音 / TikTok</div>
+          <div style="font-size:9px;opacity:0.5;margin-top:-2px;">9:16 · 1080×1920</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:8px;"></div>
+
+    <!-- ── 产品描述 ── -->
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <label class="lbl" style="color:#fff;font-size:15px;margin-bottom:0;">补充描述</label>
+        <span style="font-size:11px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.07);border-radius:99px;padding:2px 8px;">可选</span>
+      </div>
+      <textarea id="brief-desc" placeholder="描述你的产品..." style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:none;border-radius:14px;padding:14px;font-size:12px;color:rgba(255,255,255,0.22);resize:none;height:90px;outline:none;font-family:inherit;line-height:1.6;"></textarea>
+    </div>
+
+    <div style="height:8px;"></div>
+  </div>
+
+  <!-- CTA -->
+  <div class="abar">
+    <button class="bp" onclick="generateAd()">开始生成方案</button>
+  </div>
+  <div style="height:28px;background:rgba(8,7,14,0.97);flex-shrink:0;"></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN: 个人中心 (PROFILE)
+════════════════════════════════ -->
+<div id="s-profile" class="screen" style="background:var(--bg);">
+  <div style="padding:62px 20px 16px;flex-shrink:0;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--b1);">
+    <button onclick="goTo('s-create')" style="background:var(--s1);border:1px solid var(--b1);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--t1);flex-shrink:0;">‹</button>
+    <div style="font-size:15px;font-weight:600;color:var(--t1);">个人中心</div>
+  </div>
+
+  <div class="scroll" style="padding:20px 20px;">
+    <!-- Avatar & name -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding:24px 0 28px;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#3d2810,#5a3d18);border:2.5px solid rgba(201,169,110,0.5);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--gold);margin-bottom:12px;">K</div>
+      <div style="font-size:17px;font-weight:700;color:var(--t1);margin-bottom:4px;">Kris</div>
+      <div style="font-size:12px;color:var(--t2);">kriswang1999@gmail.com</div>
+      <div style="margin-top:10px;background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.25);border-radius:99px;padding:4px 14px;">
+        <span style="font-size:11px;color:var(--gold);font-weight:600;">Pro 会员</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--t1);">47</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:3px;">文案生成</div>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--blue2);">12</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:3px;">广告方案</div>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--green);">5</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:3px;">解码分析</div>
+      </div>
+    </div>
+
+    <!-- Settings list -->
+    <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">设置</div>
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:16px;overflow:hidden;margin-bottom:16px;">
+      <div onclick="alert('功能开发中')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--b1);cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;">🔑</div>
+          <div style="font-size:13px;color:var(--t1);">API 密钥管理</div>
+        </div>
+        <span style="color:var(--t3);font-size:14px;">›</span>
+      </div>
+      <div onclick="alert('功能开发中')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--b1);cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(52,211,153,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;">🌐</div>
+          <div style="font-size:13px;color:var(--t1);">语言 / Language</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;color:var(--t2);">中文</span><span style="color:var(--t3);font-size:14px;">›</span></div>
+      </div>
+      <div onclick="alert('功能开发中')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;">🔔</div>
+          <div style="font-size:13px;color:var(--t1);">通知设置</div>
+        </div>
+        <span style="color:var(--t3);font-size:14px;">›</span>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">账户</div>
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:16px;overflow:hidden;margin-bottom:16px;">
+      <div onclick="alert('功能开发中')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--b1);cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(167,139,250,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;">💳</div>
+          <div style="font-size:13px;color:var(--t1);">订阅与套餐</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;color:var(--gold);background:rgba(201,169,110,0.1);padding:2px 8px;border-radius:99px;">Pro</span><span style="color:var(--t3);font-size:14px;">›</span></div>
+      </div>
+      <div onclick="goTo('s-create')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;border-radius:9px;background:rgba(248,113,113,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;">🚪</div>
+          <div style="font-size:13px;color:var(--red);">退出登录</div>
+        </div>
+        <span style="color:var(--t3);font-size:14px;">›</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:8px 0 16px;">
+      <div style="font-size:10px;color:var(--t3);">Adspire v1.0.0 · 基于 Groq + Flux AI</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ s-resize 尺寸适配 ═══════════════ -->
+<div id="s-resize" class="screen" style="background:var(--bg);">
+  <div class="orb" style="width:220px;height:220px;background:rgba(20,120,60,0.15);top:-60px;left:-40px;"></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:62px 20px 20px;flex-shrink:0;position:relative;z-index:1;">
+    <button onclick="goTo('s-create')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);flex-shrink:0;line-height:1;">‹</button>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#fff;">尺寸适配</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);">一键适配多平台尺寸</div>
+    </div>
+  </div>
+  <div class="scroll" style="padding:0 20px;flex:1;">
+    <input type="file" id="resize-file-input" accept="image/*" style="display:none;" onchange="handleResizeUpload(this)">
+    <div class="upload-zone" id="resize-upload-zone" style="margin-bottom:20px;min-height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;cursor:pointer;" onclick="document.getElementById('resize-file-input').click()">
+      <div id="resize-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+        <div style="font-size:13px;font-weight:600;color:#fff;">上传素材</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.22);">支持图片</div>
+      </div>
+      <div id="resize-preview" style="display:none;width:100%;position:relative;" onclick="event.stopPropagation()">
+        <img id="resize-thumb" src="" style="width:100%;height:auto;max-height:280px;object-fit:contain;border-radius:14px;display:block;">
+        <div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);border-radius:99px;padding:3px 10px;font-size:10px;color:#34d399;font-weight:600;display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>已选择</div>
+      </div>
+    </div>
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">输出平台</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div class="plt-card" data-plt="ig" onclick="toggleResizePlt(this)">
+        <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+          <div style="width:16px;height:16px;background:#fff;border-radius:2px;"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;">Instagram</div>
+        <div style="font-size:9px;opacity:0.5;margin-top:-2px;">1:1 · 1080×1080</div>
+      </div>
+      <div class="plt-card" data-plt="xhs" onclick="toggleResizePlt(this)">
+        <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+          <div style="width:12px;height:16px;background:#fff;border-radius:2px;"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;">小红书</div>
+        <div style="font-size:9px;opacity:0.5;margin-top:-2px;">3:4 · 1242×1656</div>
+      </div>
+      <div class="plt-card" data-plt="fb" onclick="toggleResizePlt(this)">
+        <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+          <div style="width:13px;height:16px;background:#fff;border-radius:2px;"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;">Facebook</div>
+        <div style="font-size:9px;opacity:0.5;margin-top:-2px;">4:5 · 1080×1350</div>
+      </div>
+      <div class="plt-card" data-plt="tt" onclick="toggleResizePlt(this)">
+        <div style="width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+          <div style="width:9px;height:16px;background:#fff;border-radius:2px;"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;">抖音 / TikTok</div>
+        <div style="font-size:9px;opacity:0.5;margin-top:-2px;">9:16 · 1080×1920</div>
+      </div>
+    </div>
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:10px;">裁剪方式</div>
+    <div style="display:flex;gap:8px;margin-bottom:24px;">
+      <div onclick="document.querySelectorAll('.crop-opt').forEach(e=>e.classList.remove('on'));this.classList.add('on')" class="crop-opt on">智能裁剪</div>
+      <div onclick="document.querySelectorAll('.crop-opt').forEach(e=>e.classList.remove('on'));this.classList.add('on')" class="crop-opt">居中裁剪</div>
+      <div onclick="document.querySelectorAll('.crop-opt').forEach(e=>e.classList.remove('on'));this.classList.add('on')" class="crop-opt">填充背景</div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+  <div class="abar"><button id="resize-btn" class="bp" onclick="doResize(this)">请选择平台</button></div>
+</div>
+
+<!-- ═══════════════ s-style 风格迁移 ═══════════════ -->
+<div id="s-style" class="screen" style="background:var(--bg);">
+  <div class="orb" style="width:220px;height:220px;background:rgba(120,70,0,0.18);top:-60px;right:-40px;"></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:62px 20px 20px;flex-shrink:0;position:relative;z-index:1;">
+    <button onclick="goTo('s-create')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);flex-shrink:0;line-height:1;">‹</button>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#fff;">风格迁移</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);">将任意风格应用到你的产品图</div>
+    </div>
+  </div>
+  <div class="scroll" style="padding:0 20px;flex:1;">
+    <input type="file" id="style-product-input" accept="image/*" style="display:none;" onchange="handleStyleUpload(this,'style-product-zone','style-product-thumb','style-product-icon','style-product-label','style-product-del')">
+    <input type="file" id="style-ref-input" accept="image/*" style="display:none;" onchange="handleStyleUpload(this,'style-ref-zone','style-ref-thumb','style-ref-icon','style-ref-label','style-ref-del')">
+    <div style="display:flex;gap:12px;margin-bottom:20px;">
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:8px;">产品图</div>
+        <div id="style-product-zone" class="upload-zone" onclick="document.getElementById('style-product-input').click()" style="height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;cursor:pointer;position:relative;overflow:hidden;">
+          <img id="style-product-thumb" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px;">
+          <button id="style-product-del" onclick="clearStyleUpload(event,'style-product-zone','style-product-thumb','style-product-icon','style-product-label','style-product-input','style-product-del')" style="display:none;position:absolute;top:6px;right:6px;z-index:10;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:14px;line-height:1;padding:0;">✕</button>
+          <svg id="style-product-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+          <div id="style-product-label" style="font-size:11px;color:rgba(255,255,255,0.3);">上传</div>
+        </div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:8px;">参考风格图</div>
+        <div id="style-ref-zone" class="upload-zone" onclick="document.getElementById('style-ref-input').click()" style="height:120px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;cursor:pointer;position:relative;overflow:hidden;">
+          <img id="style-ref-thumb" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px;">
+          <button id="style-ref-del" onclick="clearStyleUpload(event,'style-ref-zone','style-ref-thumb','style-ref-icon','style-ref-label','style-ref-input','style-ref-del')" style="display:none;position:absolute;top:6px;right:6px;z-index:10;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#fff;font-size:14px;line-height:1;padding:0;">✕</button>
+          <svg id="style-ref-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+          <div id="style-ref-label" style="font-size:11px;color:rgba(255,255,255,0.3);">上传</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">预设风格</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;">
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#1a0533,#6b21a8);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">暗黑奢华</div>
+      </div>
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#fdf6ec,#e8c98a);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">奶油暖调</div>
+      </div>
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#0f172a,#1e3a5f);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">科技极简</div>
+      </div>
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#14532d,#4ade80);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">自然清新</div>
+      </div>
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#4a0020,#fb7185);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">玫瑰浪漫</div>
+      </div>
+      <div onclick="toggleStyCard(this)" class="sty-card" style="border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;position:relative;">
+        <div style="height:72px;background:linear-gradient(135deg,#1c1c1c,#f5f5f5);"></div>
+        <div style="padding:6px 8px;background:var(--s2);font-size:10px;font-weight:600;color:#fff;">黑白经典</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:8px;">风格强度</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <input id="styleIntensitySlider" type="range" min="1" max="100" value="70" style="flex:1;accent-color:var(--accent);-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;outline:none;border:none;" oninput="updateStyleSlider(this)">
+      <span id="styleIntensityVal" style="font-size:12px;font-weight:700;color:var(--accent);width:32px;border:none;outline:none;">70%</span>
+    </div>
+    <!-- Result section -->
+    <div id="style-result-wrap" style="display:none;margin-top:4px;">
+      <div style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">生成结果</div>
+      <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.5);">
+        <img id="style-result-img" src="" style="width:100%;display:block;">
+      </div>
+      <button onclick="downloadStyleResult()" style="margin-top:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;font-size:12px;color:var(--t2);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载图片</button>
+    </div>
+    <div style="height:16px;"></div>
+  </div>
+  <div class="abar"><button class="bp" onclick="doStyleTransfer(this)">开始风格迁移</button></div>
+</div>
+
+<!-- ═══════════════ s-insight 投放记录 ═══════════════ -->
+<div id="s-insight" class="screen" style="background:var(--bg);">
+  <div class="orb" style="width:240px;height:240px;background:rgba(20,60,140,0.18);top:-80px;right:-60px;"></div>
+  <div style="display:flex;align-items:center;padding:62px 20px 16px;flex-shrink:0;position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="goTo('s-create')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);flex-shrink:0;line-height:1;">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">投放记录</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);">手动记录你的广告投放</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll" style="padding:0 20px;flex:1;">
+    <div id="launch-summary" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;"></div>
+    <div id="launch-records" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;"></div>
+  </div>
+</div>
+
+
+
+
+<!-- ═══════════════ s-notif 消息通知 ═══════════════ -->
+<div id="s-notif" class="screen" style="background:var(--bg);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:62px 20px 16px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="goTo('s-create')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);line-height:1;">‹</button>
+      <div style="font-size:17px;font-weight:700;color:#fff;">消息</div>
+    </div>
+    <div onclick="clearNotifs()" style="font-size:12px;color:rgba(255,255,255,0.08);cursor:pointer;">全部已读</div>
+  </div>
+  <div id="notif-scroll" class="scroll" style="padding:0 20px;flex:1;"></div>
+</div>
+
+<!-- ═══════════════ s-resize-result 尺寸适配结果 ═══════════════ -->
+<div id="s-resize-result" class="screen" style="background:var(--bg);">
+  <div style="display:flex;align-items:center;gap:12px;padding:62px 20px 16px;flex-shrink:0;">
+    <button onclick="goTo('s-resize')" style="background:none;border:none;padding:0;font-size:28px;cursor:pointer;color:var(--t1);flex-shrink:0;line-height:1;">‹</button>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#fff;">适配结果</div>
+      <div id="rr-count-label" style="font-size:11px;color:rgba(255,255,255,0.35);">4 套尺寸已生成</div>
+    </div>
+  </div>
+  <div class="scroll" style="padding:0 20px 16px;">
+    <!-- Instagram 1:1 -->
+    <div id="rr-sec-ig" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <span style="font-size:13px;font-weight:600;color:#fff;">Instagram</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:8px;">1:1 · 1080×1080</span>
+        </div>
+        <button onclick="downloadResized('ig')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button>
+      </div>
+      <div style="width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:var(--s2);">
+        <img id="rr-ig" src="" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+    <!-- 小红书 3:4 -->
+    <div id="rr-sec-xhs" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <span style="font-size:13px;font-weight:600;color:#fff;">小红书</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:8px;">3:4 · 1242×1656</span>
+        </div>
+        <button onclick="downloadResized('xhs')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button>
+      </div>
+      <div style="width:100%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:var(--s2);">
+        <img id="rr-xhs" src="" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+    <!-- Facebook 4:5 -->
+    <div id="rr-sec-fb" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <span style="font-size:13px;font-weight:600;color:#fff;">Facebook</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:8px;">4:5 · 1080×1350</span>
+        </div>
+        <button onclick="downloadResized('fb')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button>
+      </div>
+      <div style="width:100%;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--s2);">
+        <img id="rr-fb" src="" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+    <!-- TikTok 9:16 -->
+    <div id="rr-sec-tt" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <span style="font-size:13px;font-weight:600;color:#fff;">抖音 / TikTok</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:8px;">9:16 · 1080×1920</span>
+        </div>
+        <button onclick="downloadResized('tt')" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载</button>
+      </div>
+      <div style="width:100%;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:var(--s2);">
+        <img id="rr-tt" src="" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+    <div style="height:8px;"></div>
+  </div>
+</div>
+
+<!-- 项目详情弹窗 -->
+<div id="project-detail-modal" style="display:none;position:absolute;inset:0;z-index:998;background:rgba(0,0,0,0.72);border-radius:50px;" onclick="closeProjectDetail()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#161422;border-radius:20px 20px 0 0;padding:24px 20px 44px;">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div id="pd-thumb" style="width:56px;height:56px;border-radius:14px;flex-shrink:0;"></div>
+      <div>
+        <div id="pd-name" style="font-size:16px;font-weight:700;color:#fff;"></div>
+        <div id="pd-platform" style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px;"></div>
+      </div>
+    </div>
+    <div id="pd-headline" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:14px;display:none;"></div>
+    <div id="pd-launch-info" style="margin-bottom:20px;"></div>
+    <button onclick="restoreProject(_pdCurrentId)" class="bp" style="width:100%;padding:13px;margin-bottom:10px;font-size:13px;">查看完整方案</button>
+    <div style="display:flex;gap:10px;">
+      <button id="pd-mark-btn" onclick="closeProjectDetail();setTimeout(()=>openLaunchModal(_pdCurrentId),50)" style="flex:1;background:var(--accent-dim);border:1px solid rgba(200,224,64,0.3);border-radius:12px;padding:12px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;">标记</button>
+      <button onclick="closeProjectDetail()" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);cursor:pointer;">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 标记投放弹窗 (inside #phone so position:absolute is scoped correctly) -->
+<div id="launch-modal" style="display:none;position:absolute;inset:0;z-index:999;background:rgba(0,0,0,0.72);border-radius:50px;" onclick="closeLaunchModal()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#161422;border-radius:20px 20px 0 0;padding:24px 20px 44px;">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;">投放记录</div>
+    <div id="launch-modal-subtitle" style="font-size:11px;color:var(--t2);margin-bottom:4px;"></div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:18px;">填写后保存到投放记录，方便追踪预算</div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;">投放平台</div>
+      <div id="launch-modal-platform" style="font-size:13px;color:#fff;background:var(--s2);border-radius:10px;padding:10px 12px;"></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;">投放预算（元）</div>
+      <input id="launch-budget-input" type="number" placeholder="例：2000" style="width:100%;box-sizing:border-box;background:var(--s2);border:1.5px solid var(--b1);border-radius:10px;padding:10px 12px;font-size:13px;color:#fff;outline:none;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:22px;">
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;">投放日期</div>
+      <input id="launch-date-input" type="date" style="width:100%;box-sizing:border-box;background:var(--s2);border:1.5px solid var(--b1);border-radius:10px;padding:10px 12px;font-size:13px;color:#fff;outline:none;font-family:inherit;">
+    </div>
+    <button onclick="confirmLaunch()" class="bp" style="width:100%;padding:14px;">保存</button>
+  </div>
+</div>
+
+</div><!-- end phone -->
+
+<!-- Dots -->
+
+<script>
+// ── Nav ──
+const SS=['s-create','s-brief','s-process','s-output','s-detail','s-mine','s-profile','s-resize','s-resize-result','s-style','s-insight','s-notif'];
+function goTo(id){
+  SS.forEach(s=>document.getElementById(s).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.d').forEach(d=>{
+    const a=d.dataset.s===id;
+    d.style.width=a?'24px':'6px';
+    d.style.background=a?'rgba(255,255,255,0.65)':'rgba(255,255,255,0.22)';
+  });
+  if(id==='s-process') runProcess();
+  if(id==='s-insight') renderLaunchRecords();
+  if(id==='s-notif') renderNotifs();
+  if(id==='s-brief'){
+    // Show/hide reference style banner
+    const banner = document.getElementById('ref-card-banner');
+    if(_refCard){
+      banner.style.display = 'flex';
+      document.getElementById('ref-card-thumb').style.background = _refCard.bg;
+      document.getElementById('ref-card-label').textContent = `${_refCard.brand} · ${_refCard.cat} · ${_refCard.badge}`;
+    } else {
+      banner.style.display = 'none';
+    }
+    if(uploadedFiles.length > 0){
+      renderUploadGrid();
+    } else {
+      document.getElementById('upload-placeholder').style.display='block';
+      document.getElementById('upload-preview').style.display='none';
+    }
+  }
+}
+document.querySelectorAll('.d').forEach(d=>d.addEventListener('click',()=>goTo(d.dataset.s)));
+
+// ── URL analyze (fake demo) ──
+function fakeAnalyzeURL(){
+  const input = document.getElementById('brief-url-input');
+  if(!input.value) { input.placeholder='请先粘贴产品链接...'; return; }
+  input.disabled = true;
+  input.value = '正在解析...';
+  setTimeout(()=>{
+    input.value = 'https://item.taobao.com/item.htm?id=xxx';
+    input.disabled = false;
+    document.getElementById('url-result').style.display='block';
+    document.getElementById('brief-scroll').scrollTop = 200;
+  }, 1200);
+}
+
+// ── Manual fields toggle ──
+function toggleManual(){
+  const f=document.getElementById('manual-fields');
+  const a=document.getElementById('manual-arr');
+  f.style.display=f.style.display==='none'?'block':'none';
+  a.textContent=f.style.display==='none'?'∨':'∧';
+}
+
+// ── Mode toggle ──
+function switchMode(m){
+  document.getElementById('mode-text').classList.toggle('on',m==='text');
+  document.getElementById('mode-img').classList.toggle('on',m==='img');
+  document.getElementById('mode-text-form').style.display=m==='text'?'block':'none';
+  document.getElementById('mode-img-form').style.display=m==='img'?'block':'none';
+}
+
+// ── Advanced fields ──
+function toggleAdv(){
+  const f=document.getElementById('adv-fields');
+  const a=document.getElementById('adv-arr');
+  f.style.display=f.style.display==='none'?'block':'none';
+  a.textContent=f.style.display==='none'?'∨':'∧';
+}
+
+// ── 投放平台 ──
+const PLATFORMS = {
+  instagram: { label:'Instagram / 微信', size:'1:1 · 1080×1080', w:400, h:400 },
+  xhs:       { label:'小红书',           size:'3:4 · 1242×1656', w:400, h:533 },
+  facebook:  { label:'Facebook / Meta',  size:'4:5 · 1080×1350', w:400, h:500 },
+  tiktok:    { label:'抖音 / TikTok',    size:'9:16 · 1080×1920', w:400, h:711 },
+};
+let selectedPlatform = 'instagram';
+let _refCard = null;
+
+function selectPlatform(p, el){
+  selectedPlatform = p;
+  document.querySelectorAll('#s-brief .plt-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function mapCardPlatform(platformsStr) {
+  const s = platformsStr || '';
+  if (s.includes('抖音') || s.includes('TikTok')) return 'tiktok';
+  if (s.includes('小红书')) return 'xhs';
+  if (s.includes('Facebook')) return 'facebook';
+  if (s.includes('Instagram')) return 'instagram';
+  return 'instagram';
+}
+
+function genSimilar(card) {
+  if (!card) return;
+  _refCard = card;
+  const pKey = mapCardPlatform(card.platforms);
+  const pKeys = ['instagram','xhs','facebook','tiktok'];
+  const pCards = document.querySelectorAll('#s-brief .plt-card');
+  pCards.forEach((el, i) => {
+    el.classList.remove('on');
+    if (pKeys[i] === pKey) el.classList.add('on');
+  });
+  selectedPlatform = pKey;
+  goTo('s-brief');
+}
+
+function clearRefCard() {
+  _refCard = null;
+  document.getElementById('ref-card-banner').style.display = 'none';
+}
+
+// ── 色调配色表：每种 mood → {dark, mid, light, textDark} ──
+const MOOD_PALETTES = {
+  '玫瑰粉': { dark:'#3A1028', mid:'#8B4060', light:'#FDE8F0', textDark:'#2A0A1E' },
+  '深邃黑': { dark:'#0D0D0D', mid:'#2A2A2A', light:'#F0F0F0', textDark:'#0D0D0D' },
+  '活力橙': { dark:'#4A1800', mid:'#B04820', light:'#FFF0E0', textDark:'#3A1000' },
+  '清透白': { dark:'#1A2A40', mid:'#3A5A80', light:'#EEF4FA', textDark:'#1A2A3A' },
+  '奶油米': { dark:'#2A1A08', mid:'#785A30', light:'#FAF2E0', textDark:'#2A1A08' },
+  '薰衣草': { dark:'#1E1050', mid:'#6B6BBF', light:'#F0EEFF', textDark:'#1A0A50' },
+  '湖水蓝': { dark:'#082038', mid:'#2A6890', light:'#E0F2FF', textDark:'#082030' },
+  '森林绿': { dark:'#0A2015', mid:'#2A6845', light:'#E0F5E8', textDark:'#0A1E10' },
+  '活力红': { dark:'#350808', mid:'#A02020', light:'#FFE8E8', textDark:'#280505' },
+  '珊瑚':   { dark:'#3A1208', mid:'#A85030', light:'#FFECE0', textDark:'#301005' },
+};
+const DEFAULT_PALETTE = { dark:'#16213E', mid:'#2A3A6A', light:'#F0F2FA', textDark:'#16213E' };
+
+function getMoodPalette(mood){
+  if(!mood) return DEFAULT_PALETTE;
+  for(const [k,v] of Object.entries(MOOD_PALETTES)){ if(mood.includes(k)) return v; }
+  return DEFAULT_PALETTE;
+}
+
+function applyPlatformLayout(p){
+  const H = PLATFORMS[p].h;
+  ['tpl-1','tpl-2','tpl-3'].forEach(id=>{
+    document.getElementById(id).style.height = H+'px';
+  });
+}
+
+// ── 图片上传 ──
+let uploadedFile = null;
+
+let uploadedFiles = [];
+
+function handleFileSelect(input){
+  const newFiles = [...input.files].slice(0, 4 - uploadedFiles.length);
+  if(!newFiles.length) return;
+  uploadedFiles = uploadedFiles.concat(newFiles).slice(0, 4);
+  uploadedFile = uploadedFiles[0];
+  renderUploadGrid();
+  input.value = '';
+}
+
+function renderUploadGrid(){
+  const grid = document.getElementById('upload-grid');
+  const count = uploadedFiles.length;
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = count === 1 ? '1fr' : '1fr 1fr';
+  uploadedFiles.forEach((file, i) => {
+    const url = URL.createObjectURL(file);
+    const h = count === 1 ? '160px' : count === 2 ? '140px' : '100px';
+    const div = document.createElement('div');
+    div.style.cssText = `position:relative;height:${h};`;
+    div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;">
+      <button onclick="event.preventDefault();removeUploadFile(${i})" style="position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>`;
+    grid.appendChild(div);
+  });
+  if(count < 4){
+    const add = document.createElement('div');
+    add.style.cssText = `height:${count===1?'160px':count===2?'140px':'100px'};background:rgba(200,224,64,0.06);border:1.5px dashed rgba(200,224,64,0.3);border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;`;
+    add.onclick = (e)=>{e.preventDefault();document.getElementById('real-file-input').click();};
+    add.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(200,224,64,0.75)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="4" y1="12" x2="20" y2="12"/></svg>`;
+    if(count % 2 === 1 || count === 0) grid.appendChild(add);
+  }
+  document.getElementById('upload-placeholder').style.display='none';
+  document.getElementById('upload-preview').style.display='block';
+  document.getElementById('upload-count').textContent = count;
+  document.getElementById('brief-upload-zone').classList.add('has-img');
+}
+
+function removeUploadFile(idx){
+  uploadedFiles.splice(idx, 1);
+  uploadedFile = uploadedFiles[0] || null;
+  if(uploadedFiles.length === 0){
+    document.getElementById('upload-placeholder').style.display='';
+    document.getElementById('upload-preview').style.display='none';
+    document.getElementById('brief-upload-zone').classList.remove('has-img');
+  } else {
+    renderUploadGrid();
+  }
+}
+
+function toggleStyCard(el){
+  const isSelected = el.style.borderColor === 'var(--accent)';
+  document.querySelectorAll('.sty-card').forEach(e=>e.style.borderColor='transparent');
+  if(!isSelected) el.style.borderColor = 'var(--accent)';
+}
+
+function handleStyleUpload(input, zoneId, thumbId, iconId, labelId, delId){
+  const file = input.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  const thumb = document.getElementById(thumbId);
+  const zone  = document.getElementById(zoneId);
+  thumb.src = url;
+  thumb.style.display = 'block';
+  document.getElementById(iconId).style.display = 'none';
+  document.getElementById(labelId).style.display = 'none';
+  document.getElementById(delId).style.display = 'block';
+  zone.classList.add('has-img');
+}
+
+function clearStyleUpload(evt, zoneId, thumbId, iconId, labelId, inputId, delId){
+  evt.stopPropagation();
+  const thumb = document.getElementById(thumbId);
+  const zone  = document.getElementById(zoneId);
+  thumb.src = ''; thumb.style.display = 'none';
+  document.getElementById(iconId).style.display = '';
+  document.getElementById(labelId).style.display = '';
+  document.getElementById(delId).style.display = 'none';
+  document.getElementById(inputId).value = '';
+  zone.classList.remove('has-img');
+}
+
+function handleResizeUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  document.getElementById('resize-thumb').src = url;
+  document.getElementById('resize-placeholder').style.display='none';
+  document.getElementById('resize-preview').style.display='block';
+  document.getElementById('resize-upload-zone').classList.add('has-img');
+}
+
+function toggleResizePlt(el){
+  el.classList.toggle('on');
+  const count = document.querySelectorAll('#s-resize .plt-card.on').length;
+  const btn = document.getElementById('resize-btn');
+  if(count === 0) btn.textContent = '请选择平台';
+  else if(count === 4) btn.textContent = '适配所有平台';
+  else btn.textContent = `适配 ${count} 个平台`;
+}
+
+const PLATFORM_SIZES = {
+  ig:  {w:1080, h:1080, label:'instagram_1080x1080'},
+  xhs: {w:1242, h:1656, label:'xiaohongshu_1242x1656'},
+  fb:  {w:1080, h:1350, label:'facebook_1080x1350'},
+  tt:  {w:1080, h:1920, label:'tiktok_1080x1920'},
+};
+let _resizeDataURLs = {};
+
+function cropCanvas(img, targetW, targetH, mode){
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW; canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const targetRatio = targetW / targetH;
+  const imgRatio = iw / ih;
+
+  if(mode === 'smart'){
+    // Fit entire image with padding + white background (ideal for product photos)
+    const padding = 0.08;
+    const fitScale = Math.min(targetW * (1 - padding*2) / iw, targetH * (1 - padding*2) / ih);
+    const fw = iw * fitScale, fh = ih * fitScale;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetW, targetH);
+    ctx.drawImage(img, (targetW - fw) / 2, (targetH - fh) / 2, fw, fh);
+  } else if(mode === 'fill'){
+    // Blurred background + fitted image centered
+    const bgScale = Math.max(targetW/iw, targetH/ih) * 1.15;
+    ctx.filter = 'blur(28px)';
+    ctx.drawImage(img, (targetW - iw*bgScale)/2, (targetH - ih*bgScale)/2, iw*bgScale, ih*bgScale);
+    ctx.filter = 'none';
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fillRect(0, 0, targetW, targetH);
+    const fitScale = Math.min(targetW/iw, targetH/ih);
+    const fw = iw*fitScale, fh = ih*fitScale;
+    ctx.drawImage(img, (targetW-fw)/2, (targetH-fh)/2, fw, fh);
+  } else {
+    // Center crop (居中裁剪)
+    let sx, sy, sw, sh;
+    if(imgRatio > targetRatio){
+      sh = ih; sw = ih * targetRatio;
+      sx = (iw - sw) / 2; sy = 0;
+    } else {
+      sw = iw; sh = iw / targetRatio;
+      sx = 0; sy = (ih - sh) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+  }
+  return canvas;
+}
+
+function downloadResized(key){
+  const url = _resizeDataURLs[key];
+  if(!url){ alert('请先生成适配图片'); return; }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = PLATFORM_SIZES[key].label + '.jpg';
+  a.click();
+}
+
+function doResize(btn){
+  const imgEl = document.getElementById('resize-thumb');
+  if(!imgEl.src || imgEl.src === window.location.href){ alert('请先上传素材图片'); return; }
+  const selected = [...document.querySelectorAll('#s-resize .plt-card.on')].map(e=>e.dataset.plt);
+  if(selected.length === 0){ alert('请至少选择一个平台'); return; }
+  const modeName = [...document.querySelectorAll('#s-resize .crop-opt')].find(e=>e.classList.contains('on'))?.textContent || '居中裁剪';
+  const mode = modeName.includes('填充') ? 'fill' : modeName.includes('居中') ? 'crop' : 'smart';
+  const orig = btn.textContent;
+  btn.textContent = '适配中...'; btn.disabled = true;
+
+  const img = new Image();
+  img.onload = ()=>{
+    _resizeDataURLs = {};
+    const secs = {ig:'rr-sec-ig', xhs:'rr-sec-xhs', fb:'rr-sec-fb', tt:'rr-sec-tt'};
+    const imgs = {ig:'rr-ig', xhs:'rr-xhs', fb:'rr-fb', tt:'rr-tt'};
+    ['ig','xhs','fb','tt'].forEach(key=>{
+      const sec = document.getElementById(secs[key]);
+      if(selected.includes(key)){
+        const {w,h} = PLATFORM_SIZES[key];
+        const canvas = cropCanvas(img, w, h, mode);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.92);
+        _resizeDataURLs[key] = dataURL;
+        document.getElementById(imgs[key]).src = dataURL;
+        if(sec) sec.style.display='';
+      } else {
+        if(sec) sec.style.display='none';
+      }
+    });
+    const actualCount = Object.keys(_resizeDataURLs).length;
+    document.getElementById('rr-count-label').textContent = `${actualCount} 套尺寸已生成`;
+    btn.textContent = orig; btn.disabled = false;
+    const pltNames = selected.map(k => PLATFORM_SIZES[k]?.label || k).join('、');
+    addNotif('resize', '尺寸适配完成', `已生成 ${actualCount} 套：${pltNames}`);
+    goTo('s-resize-result');
+  };
+  img.src = imgEl.src;
+}
+
+// ── 调用真实 API 生成广告 ──
+function showRateLimit(msg){
+  // Navigate back to brief and show a friendly overlay
+  goTo('s-brief');
+  const existing = document.getElementById('rate-limit-toast');
+  if(existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'rate-limit-toast';
+  toast.style.cssText = 'position:absolute;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,7,14,0.88);backdrop-filter:blur(12px);border-radius:50px;padding:32px 28px;text-align:center;';
+  toast.innerHTML = `
+    <div style="width:56px;height:56px;border-radius:16px;background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;">体验次数已用完</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:24px;">${msg}</div>
+    <button onclick="document.getElementById('rate-limit-toast').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 24px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;">好的</button>
+  `;
+  document.getElementById('phone').appendChild(toast);
+}
+
+async function generateAd(){
+  if(!uploadedFile){ alert('请先上传产品图片'); return; }
+  // Reset processing animation state
+  procDone = false;
+  ['ag1','ag2','ag3'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.style.opacity= id==='ag1'?'1':'0.3';
+    el.querySelector('.ag-av').classList.add('pulse');
+    document.getElementById(id+'-c').style.display='none';
+  });
+  document.getElementById('ag1').querySelector('.ag-av').classList.add('pulse');
+  document.getElementById('proc-bar').style.width='33%';
+  document.getElementById('proc-pct').textContent='33%';
+  document.getElementById('proc-step').textContent='生成广告文案...';
+  document.getElementById('proc-sub').textContent='Copy Agent 分析中...';
+  const plt = PLATFORMS[selectedPlatform];
+  document.getElementById('proc-product-label').textContent = (uploadedFile ? uploadedFile.name.replace(/\.[^.]+$/,'') : '产品') + ' · ' + (plt ? plt.label : '');
+  goTo('s-process');
+
+  const formData = new FormData();
+  formData.append('image', uploadedFile);
+  formData.append('platform', selectedPlatform);
+  if(_refCard){
+    const refStyle = _refCard.style_desc
+      ? _refCard.style_desc
+      : `${_refCard.cat} aesthetic inspired by ${_refCard.brand} brand, ${_refCard.badge} trending format`;
+    formData.append('reference_style', refStyle);
+  }
+
+  try {
+    const resp = await fetch('/api/generate', { method:'POST', body:formData });
+    const data = await resp.json();
+    if(data.error){
+      if(data.rate_limited){
+        showRateLimit(data.error);
+      } else {
+        alert('生成失败：' + data.error);
+        goTo('s-brief');
+      }
+      return;
+    }
+
+    // Update progress to 100% before rendering
+    document.getElementById('proc-bar').style.width='100%';
+    document.getElementById('proc-pct').textContent='100%';
+    document.getElementById('proc-step').textContent='方案已就绪';
+    document.getElementById('proc-sub').textContent='全部完成 🎉';
+    if(data.ad_copy && data.ad_copy.product_name){
+      const plt2 = PLATFORMS[selectedPlatform];
+      document.getElementById('proc-product-label').textContent = data.ad_copy.product_name + ' · ' + (plt2 ? plt2.label : '');
+    }
+
+    await updateOutput(data);
+    _refCard = null;
+    addNotif('ad', '广告创作完成', `${data.ad_copy?.product_name || '产品'} · 2 套创意已生成`);
+    goTo('s-output');
+    document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.tbtn')[1].classList.add('on');
+    document.getElementById('tc').style.display='none';
+    document.getElementById('tcr').style.display='block';
+    document.getElementById('tst').style.display='none';
+  } catch(e){
+    console.error(e);
+    alert('请求失败，请确认后端 server.py 已运行');
+    goTo('s-brief');
+  }
+}
+
+function renderAdCopies(copies){
+  const TYPE_STYLE = {
+    '痛点型': {bg:'rgba(248,113,113,0.12)',color:'var(--red)'},
+    '故事型': {bg:'rgba(96,165,250,0.12)', color:'var(--cyan)'},
+    '对比型': {bg:'rgba(167,139,250,0.12)',color:'var(--purple)'},
+    '权威型': {bg:'rgba(201,169,110,0.12)',color:'#c9a96e'},
+    '悬念型': {bg:'rgba(52,211,153,0.12)', color:'var(--green)'},
+  };
+  const groups = {};
+  copies.forEach(c => { (groups[c.type] = groups[c.type]||[]).push(c); });
+  const tab = document.getElementById('tc-tab-btn');
+  if(tab) tab.textContent = `文案 (${copies.length})`;
+  let html = '';
+  Object.entries(groups).forEach(([type, items], gi) => {
+    const st = TYPE_STYLE[type] || {bg:'rgba(255,255,255,0.08)',color:'var(--t2)'};
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;${gi>0?'margin-top:16px;':''}margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:14px;font-weight:700;color:var(--t1);">${type}</span>
+        <span class="ptag" style="background:${st.bg};color:${st.color};">${items[0]?.subtype||''}</span>
+      </div>
+      <span style="font-size:10px;color:var(--t3);">${items.length}条</span>
+    </div>`;
+    items.forEach((c,i) => {
+      html += `<div class="ccard${i===0&&gi===0?' sel':''}" onclick="goTo('s-detail')">
+        <div style="font-size:13px;color:var(--t1);line-height:1.75;margin-bottom:10px;">"${c.text}"</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:5px;">
+            <span class="ptag" style="background:${st.bg};color:${st.color};">${c.subtype}</span>
+            <span style="font-size:10px;color:var(--t3);padding:3px 8px;background:var(--s2);border-radius:99px;">${c.platform}</span>
+          </div>
+          <span style="font-size:11px;color:var(--blue2);">详情 →</span>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('tc-content').innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--t3);">文案生成失败，请重试</div>';
+}
+
+let _styleResultB64 = '';
+
+async function doStyleTransfer(btn){
+  const productThumb = document.getElementById('style-product-thumb');
+  if(!productThumb.src || productThumb.style.display==='none'){ alert('请先上传产品图'); return; }
+
+  const selectedCard = [...document.querySelectorAll('#s-style .sty-card')].find(e=>e.style.borderColor && !e.style.borderColor.includes('transparent') && e.style.borderColor!=='');
+  const refThumb = document.getElementById('style-ref-thumb');
+  const hasRef = refThumb.src && refThumb.style.display!=='none';
+  if(!selectedCard && !hasRef){ alert('请选择预设风格或上传参考图'); return; }
+
+  const styleName = selectedCard ? selectedCard.querySelector('div:last-child').textContent.trim() : '';
+  const orig = btn.textContent;
+  btn.textContent = '生成中...'; btn.disabled = true;
+  document.getElementById('style-result-wrap').style.display = 'none';
+
+  try {
+    const fd = new FormData();
+    const productBlob = await fetch(productThumb.src).then(r=>r.blob());
+    fd.append('product', productBlob, 'product.jpg');
+    if(hasRef){
+      const refBlob = await fetch(refThumb.src).then(r=>r.blob());
+      fd.append('reference', refBlob, 'reference.jpg');
+    }
+    if(styleName) fd.append('style_name', styleName);
+
+    const resp = await fetch('/api/style-transfer', {method:'POST', body:fd});
+    const data = await resp.json();
+    if(data.image){
+      _styleResultB64 = data.image;
+      document.getElementById('style-result-img').src = 'data:image/jpeg;base64,'+data.image;
+      document.getElementById('style-result-wrap').style.display = 'block';
+      document.getElementById('style-result-wrap').scrollIntoView({behavior:'smooth', block:'start'});
+      addNotif('style', '风格迁移完成', `${styleName || '自定义风格'} · 效果图已生成`);
+    } else {
+      alert('生成失败：' + (data.error||'未知错误'));
+    }
+  } catch(e){
+    alert('请求失败，请确认服务器在运行');
+  }
+  btn.textContent = orig; btn.disabled = false;
+}
+
+function downloadStyleResult(){
+  if(!_styleResultB64){ return; }
+  const a = document.createElement('a');
+  a.href = 'data:image/jpeg;base64,'+_styleResultB64;
+  a.download = 'style_transfer.jpg';
+  a.click();
+}
+
+let _lastGenerated = [];
+let _lastCopies = [];
+
+function exportImages(){
+  if(!_lastGenerated.length){ alert('请先生成广告图'); return; }
+  _lastGenerated.forEach((b64, i)=>{
+    const a = document.createElement('a');
+    a.href = 'data:image/jpeg;base64,' + b64;
+    a.download = `ad_creative_${i+1}.jpg`;
+    a.click();
+  });
+}
+
+function copyAllCopies(){
+  if(!_lastCopies.length){ alert('请先生成文案'); return; }
+  const text = _lastCopies.map((c,i)=>
+    `【${c.type} · ${c.subtype} · ${c.platform}】\n${c.text}`
+  ).join('\n\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.querySelector('.abar .bp');
+    const orig = btn.textContent;
+    btn.textContent = '✓ 已复制';
+    setTimeout(()=>{ btn.textContent = orig; }, 1800);
+  });
+}
+
+function renderAdStrategy(s){
+  if(!s || !s.meta) return;
+  const kw = (s.xiaohongshu?.keywords||[]).join(' / ');
+  document.getElementById('tst-content').innerHTML = `
+    <div class="sblock"><div style="font-size:12px;font-weight:600;color:var(--blue2);margin-bottom:10px;">📘 Meta 建议</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.9;">受众：${s.meta.audience}<br>Lookalike：${s.meta.lookalike}<br>${s.meta.test}</div></div>
+    <div class="sblock"><div style="font-size:12px;font-weight:600;color:var(--pink);margin-bottom:10px;">🌸 小红书建议</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.9;">内容形式：${s.xiaohongshu?.format||''}<br>关键词：${kw}<br>${s.xiaohongshu?.tip||''}</div></div>
+    <div class="sblock">
+      <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:12px;">🧪 测试结构</div>
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.12);border-radius:10px;padding:10px 12px;margin-bottom:8px;"><div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:4px;">Round 1</div><div style="font-size:11px;color:var(--t2);">2套广告图 × 2受众 · ¥100/组/天 · 跑5天</div></div>
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.12);border-radius:10px;padding:10px 12px;"><div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:4px;">Round 2</div><div style="font-size:11px;color:var(--t2);">赢家素材 × 3x预算扩量</div></div>
+    </div>
+    <div class="sblock">
+      <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:12px;">📊 KPI 参考</div>
+      <div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span style="color:var(--t2);">CTR</span><span style="color:var(--t1);font-weight:600;">${s.kpi?.ctr||'1.5% – 3%'}</span></div><div class="mbar"><div class="mfill" style="width:70%;background:var(--blue2);"></div></div></div>
+      <div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span style="color:var(--t2);">CPC</span><span style="color:var(--t1);font-weight:600;">${s.kpi?.cpc||'¥1.5 – ¥4'}</span></div><div class="mbar"><div class="mfill" style="width:55%;background:var(--amber);"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span style="color:var(--t2);">目标 ROAS</span><span style="color:var(--t1);font-weight:600;">${s.kpi?.roas||'≥ 3x'}</span></div><div class="mbar"><div class="mfill" style="width:80%;background:var(--green);"></div></div></div>
+    </div>`;
+}
+
+async function updateOutput(data){
+  const copy = data.ad_copy;
+  const generated = data.generated || [];
+  const fallbackSrc = data.product_b64 ? 'data:image/png;base64,'+data.product_b64 : '';
+  if(data.ad_copies && data.ad_copies.length){ _lastCopies = data.ad_copies; renderAdCopies(data.ad_copies); }
+  if(data.ad_strategy) renderAdStrategy(data.ad_strategy);
+  _lastGenerated = (data.generated||[]).filter(Boolean);
+
+  // Save this ad to localStorage for 投放记录 + 项目
+  const plt = PLATFORMS[selectedPlatform];
+  const adId = Date.now();
+  _currentAdId = adId;
+  // Compress product image to small thumbnail for storage
+  let thumbDataUrl = '';
+  if(uploadedFile){
+    try {
+      thumbDataUrl = await new Promise(resolve => {
+        const img = new Image();
+        const url = URL.createObjectURL(uploadedFile);
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          const s = Math.min(120 / Math.max(img.width, img.height), 1);
+          c.width = img.width * s; c.height = img.height * s;
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = url;
+      });
+    } catch(e){}
+  }
+
+  const adRecord = {
+    id: adId,
+    product_name: copy.product_name || '未知产品',
+    headline: copy.headline || '',
+    platform_label: plt.label,
+    platform_size: plt.size.split('·')[0].trim(),
+    color_mood: copy.color_mood || '',
+    timestamp: adId,
+    launched: false,
+    budget: null,
+    launch_date: null,
+    copies: data.ad_copies || [],
+    strategy: data.ad_strategy || null,
+    images: (data.generated||[]).filter(Boolean),
+    thumb: thumbDataUrl,
+  };
+  try {
+    const hist = JSON.parse(localStorage.getItem('admind_ads')||'[]');
+    // Only keep images for the 8 most recent records to avoid storage limits
+    hist.forEach((r, i) => { if(i >= 7) r.images = []; });
+    hist.unshift(adRecord);
+    localStorage.setItem('admind_ads', JSON.stringify(hist.slice(0, 50)));
+  } catch(e){
+    // If storage full, save without images
+    try {
+      adRecord.images = [];
+      const hist = JSON.parse(localStorage.getItem('admind_ads')||'[]');
+      hist.unshift(adRecord);
+      localStorage.setItem('admind_ads', JSON.stringify(hist.slice(0,50)));
+    } catch(e2){}
+  }
+
+  document.getElementById('out-product-name').textContent = copy.product_name || '产品';
+  document.getElementById('out-meta-info').textContent = `2 套创意 · ${plt.label} · ${plt.size}`;
+
+  applyPlatformLayout(selectedPlatform);
+
+  // Display raw gpt-image-1 generated images directly — no overlays, no html2canvas
+  const labels = ['场景一','场景二'];
+  const wrap = document.getElementById('ad-images-wrap');
+  wrap.innerHTML = '';
+
+  for(let i=0;i<2;i++){
+    const card = document.createElement('div');
+    card.style.cssText = 'margin-bottom:14px;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.5);';
+
+    if(generated[i]){
+      card.innerHTML = `
+        <div style="font-size:10px;color:var(--t2);padding:7px 12px;background:var(--s2);">创意 ${i+1} · ${labels[i]}</div>
+        <img src="data:image/jpeg;base64,${generated[i]}" style="width:100%;display:block;">
+      `;
+    } else {
+      card.innerHTML = `<div style="height:80px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--t3);background:var(--s2);">图片生成失败</div>`;
+    }
+    wrap.appendChild(card);
+  }
+  document.getElementById('out-ad-creative').style.display='block';
+}
+
+// ── Processing animation ──
+let procDone=false;
+function runProcess(){
+  if(procDone)return; procDone=true;
+  setTimeout(()=>{
+    document.getElementById('ag1-s').innerHTML='<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>15条文案 + 心理学标签生成完成</span>';
+    document.getElementById('ag1-c').style.display='block';
+    document.querySelector('#ag1 .ag-av').classList.remove('pulse');
+    const a2=document.getElementById('ag2'); a2.style.opacity='1';
+    a2.querySelector('.ag-av').classList.add('pulse');
+    document.getElementById('ag2-s').textContent='生成2套视觉创意方向...';
+    document.getElementById('ag2-s').style.color='#c9a96e';
+    document.getElementById('proc-sub').textContent='Creative Agent 工作中...';
+    document.getElementById('proc-bar').style.width='66%';
+    document.getElementById('proc-pct').textContent='66%';
+    document.getElementById('proc-step').textContent='生成视觉创意方向...';
+  },1800);
+  setTimeout(()=>{
+    document.getElementById('ag2-s').innerHTML='<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>2套视觉方向 + Prompt生成完成</span>';
+    document.getElementById('ag2-c').style.display='block';
+    document.querySelector('#ag2 .ag-av').classList.remove('pulse');
+    const a3=document.getElementById('ag3'); a3.style.opacity='1';
+    a3.querySelector('.ag-av').classList.add('pulse');
+    document.getElementById('ag3-s').textContent='分析投放策略 + 测试结构...';
+    document.getElementById('ag3-s').style.color='#34d399';
+    document.getElementById('proc-sub').textContent='Strategy Agent 分析中...';
+    document.getElementById('proc-bar').style.width='88%';
+    document.getElementById('proc-pct').textContent='88%';
+    document.getElementById('proc-step').textContent='生成投放策略...';
+  },3600);
+  setTimeout(()=>{
+    document.getElementById('ag3-s').innerHTML='<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>投放策略 + KPI建议生成完成</span>';
+    document.getElementById('ag3-c').style.display='block';
+    document.querySelector('#ag3 .ag-av').classList.remove('pulse');
+    document.getElementById('proc-sub').textContent='AI 正在生成广告图片...';
+    document.getElementById('proc-bar').style.width='90%';
+    document.getElementById('proc-pct').textContent='90%';
+    document.getElementById('proc-step').textContent='生成广告创意图片中，请稍候...';
+  },5600);
+}
+
+// ── Navigate to 创意方向 tab in output ──
+function showCreative(){
+  goTo('s-output');
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tbtn')[1].classList.add('on');
+  document.getElementById('tc').style.display='none';
+  document.getElementById('tcr').style.display='block';
+  document.getElementById('tst').style.display='none';
+}
+
+// ── Output tabs ──
+function swtab(btn,id){
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['tc','tcr','tst'].forEach(x=>{
+    const el=document.getElementById(x);
+    el.style.display=x===id?'':'none';
+    if(x===id){el.style.flex='1';}
+  });
+}
+
+// ── Discover card deck ──
+const BG = s => `linear-gradient(to bottom,rgba(0,0,0,0.18) 0%,rgba(0,0,0,0.62) 100%) center/cover, url(${s}?w=512&h=683&fit=crop&auto=format) center/cover no-repeat`;
+const BG_RAW = s => {
+  const url = s.includes('pexels.com') ? s.replace(/&h=\d+&w=\d+/, '&w=800&h=418&fit=crop') : s;
+  return `linear-gradient(to bottom,rgba(0,0,0,0.18) 0%,rgba(0,0,0,0.62) 100%) center/cover, url(${url}) center/cover no-repeat`;
+};
+
+const CATEGORY_CARDS = {
+  '全部': [
+    { bg: BG('https://images.unsplash.com/photo-1580870069867-74c57ee1bb07'), cat:'SKINCARE', brand:'LUMIÈRE', sub:'水光赋活精华', platforms:'小红书 · Instagram', stat:'4.2K 收藏', badge:'热门 #1',
+      style_desc:'clean minimalist K-beauty editorial, soft diffused white studio lighting, pale pink and milky white tones, smooth glass and liquid textures, dewy fresh aesthetic, wide negative space' },
+    { bg: BG('https://images.unsplash.com/photo-1658216768198-92d71d6a72c9'), cat:'TECH', brand:'NEXUS PRO', sub:'超感智能旗舰', platforms:'抖音 · TikTok', stat:'3.8K 收藏', badge:'热门',
+      style_desc:'dark dramatic tech product photography, pure black background with cool electric-blue neon rim lighting, sleek metallic reflective surfaces, high contrast cinematic composition, futuristic premium aesthetic' },
+    { bg: BG('https://images.unsplash.com/photo-1603189343302-e603f7add05a'), cat:'FASHION', brand:'ÉDITION', sub:'限量特辑系列', platforms:'Instagram · Facebook', stat:'5.1K 收藏', badge:'爆款',
+      style_desc:'moody luxury editorial photography, deep dark shadows with selective warm golden rim light, dark marble and velvet textures, dramatic chiaroscuro, high-fashion magazine layout, premium cinematic atmosphere' },
+    { bg: BG('https://images.unsplash.com/photo-1708667027894-6e9481ae1baf'), cat:'WELLNESS', brand:'VITALIS', sub:'纯净有机本草', platforms:'小红书 · Facebook', stat:'2.9K 收藏', badge:'精选',
+      style_desc:'warm earthy organic photography, soft golden natural sunlight, botanical green leaves and herbs, natural linen and aged wood textures, wholesome clean-label aesthetic, warm cream and sage tones' },
+  ],
+  '护肤': [
+    { bg: BG('https://images.unsplash.com/photo-1580870069867-74c57ee1bb07'), cat:'SKINCARE', brand:'LUMIÈRE', sub:'水光赋活精华', platforms:'小红书 · Instagram', stat:'4.2K 收藏', badge:'热门 #1',
+      style_desc:'clean minimalist K-beauty editorial, soft diffused white studio lighting, pale pink and milky white tones, smooth glass and liquid textures, dewy fresh aesthetic, wide negative space' },
+    { bg: BG('https://images.unsplash.com/photo-1571781926291-c477ebfd024b'), cat:'SKINCARE', brand:'GLOW LAB', sub:'玻尿酸修护面膜', platforms:'小红书 · 微博', stat:'3.1K 收藏', badge:'新品',
+      style_desc:'fresh beauty flat-lay on pure white background, soft shadow detail, translucent glass and gel textures, clean clinical minimalism, cool blue-white tones, airy spacious composition' },
+    { bg: BG('https://images.unsplash.com/photo-1556228720-195a672e8a03'), cat:'SKINCARE', brand:'AESOP', sub:'经典洁面套装', platforms:'Instagram · 小红书', stat:'2.7K 收藏', badge:'爆款',
+      style_desc:'warm neutral apothecary aesthetic, aged terracotta and olive tones, architectural geometric shadows, premium matte packaging, minimal raw textures, sophisticated understated luxury' },
+    { bg: BG('https://images.unsplash.com/photo-1512290923902-8a9f81dc236c'), cat:'SKINCARE', brand:'TATCHA', sub:'黄金修护精华', platforms:'小红书 · Facebook', stat:'1.9K 收藏', badge:'精选',
+      style_desc:'Japanese wabi-sabi luxury beauty, soft amber candlelight glow, gold leaf and lacquer accents, silk and porcelain textures, refined serene composition, warm ivory and gold palette' },
+  ],
+  '科技': [
+    { bg: BG('https://images.unsplash.com/photo-1658216768198-92d71d6a72c9'), cat:'TECH', brand:'NEXUS PRO', sub:'超感智能旗舰', platforms:'抖音 · TikTok', stat:'3.8K 收藏', badge:'热门 #1',
+      style_desc:'dark dramatic tech product photography, pure black background with cool electric-blue neon rim lighting, sleek metallic reflective surfaces, high contrast cinematic composition, futuristic premium aesthetic' },
+    { bg: BG('https://images.unsplash.com/photo-1531297484001-80022131f5a1'), cat:'TECH', brand:'PIXEL X', sub:'影像旗舰新纪元', platforms:'YouTube · 抖音', stat:'5.2K 收藏', badge:'爆款',
+      style_desc:'cinematic flagship smartphone photography, deep space black with sharp metallic specular highlights, lens flare accents, premium product isolation, bold geometric light trails, cutting-edge editorial' },
+    { bg: BG('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5'), cat:'TECH', brand:'AURORA', sub:'AI 智能穿戴设备', platforms:'TikTok · Instagram', stat:'2.4K 收藏', badge:'新品',
+      style_desc:'futuristic wearable tech editorial, gradient purple-to-cyan neon glow on dark background, sleek organic curves, sci-fi inspired atmosphere, particle light effects, premium consumer electronics feel' },
+    { bg: BG('https://images.unsplash.com/photo-1550751246-d1bab4228b1f'), cat:'TECH', brand:'CORE OS', sub:'轻薄旗舰笔记本', platforms:'微博 · 抖音', stat:'1.8K 收藏', badge:'精选',
+      style_desc:'premium laptop product photography on cool grey gradient, clean precise geometric shadows, minimal professional studio environment, silver and space-grey tones, sharp detail, business elegant' },
+  ],
+  '时尚': [
+    { bg: BG('https://images.unsplash.com/photo-1603189343302-e603f7add05a'), cat:'FASHION', brand:'ÉDITION', sub:'限量特辑系列', platforms:'Instagram · Facebook', stat:'5.1K 收藏', badge:'热门 #1',
+      style_desc:'moody luxury editorial photography, deep dark shadows with selective warm golden rim light, dark marble and velvet textures, dramatic chiaroscuro, high-fashion magazine layout, premium cinematic atmosphere' },
+    { bg: BG('https://images.unsplash.com/photo-1445205170816-6f4fad31a2e1'), cat:'FASHION', brand:'MAISON', sub:'秋冬新款大衣', platforms:'小红书 · Instagram', stat:'4.4K 收藏', badge:'新品',
+      style_desc:'autumn fashion editorial, warm amber and camel tones, soft natural window light through sheer curtains, rich wool and cashmere textures, timeless Parisian elegance, warm mid-tone palette' },
+    { bg: BG('https://images.unsplash.com/photo-1469334031925-f0b76f07a1b5'), cat:'FASHION', brand:'REVERIE', sub:'复古街头系列', platforms:'Instagram · TikTok', stat:'3.3K 收藏', badge:'爆款',
+      style_desc:'urban street style photography, gritty concrete and brick wall backgrounds, bold high-contrast colors, dynamic diagonal composition, energetic youthful attitude, raw authentic vibe' },
+    { bg: BG('https://images.unsplash.com/photo-1490481651871-ab68de25d43d'), cat:'FASHION', brand:'ATELIER', sub:'法式优雅日常', platforms:'小红书 · 微博', stat:'2.1K 收藏', badge:'精选',
+      style_desc:'soft romantic Parisian lifestyle photography, warm hazy sunlight, cream and dusty rose palette, sheer linen drapes, feminine bokeh backgrounds, elegant effortless French aesthetic' },
+  ],
+  '健康': [
+    { bg: BG('https://images.unsplash.com/photo-1708667027894-6e9481ae1baf'), cat:'WELLNESS', brand:'VITALIS', sub:'纯净有机本草', platforms:'小红书 · Facebook', stat:'2.9K 收藏', badge:'热门 #1',
+      style_desc:'warm earthy organic photography, soft golden natural sunlight, botanical green leaves and herbs, natural linen and aged wood textures, wholesome clean-label aesthetic, warm cream and sage tones' },
+    { bg: BG('https://images.unsplash.com/photo-1490645935672-e0f5c6d2a5d9'), cat:'WELLNESS', brand:'ZEN FLOW', sub:'瑜伽修身套装', platforms:'Instagram · 小红书', stat:'3.5K 收藏', badge:'爆款',
+      style_desc:'clean wellness lifestyle photography, bright airy natural light, mint and sage green tones, serene open yoga studio setting, minimal white backgrounds with plant shadows, fresh healthy energy' },
+    { bg: BG('https://images.unsplash.com/photo-1512621334262-a8f892da4574'), cat:'WELLNESS', brand:'BLOOM', sub:'有机冷压果汁', platforms:'小红书 · 微博', stat:'1.7K 收藏', badge:'新品',
+      style_desc:'vibrant fresh juice photography, strong backlit golden sunlight through glass, tropical saturated fruit colors, bright cheerful health aesthetic, high energy positive composition' },
+    { bg: BG('https://images.unsplash.com/photo-1540553016722-983e48a2cd10'), cat:'WELLNESS', brand:'PURE EARTH', sub:'益生菌营养补剂', platforms:'抖音 · TikTok', stat:'2.2K 收藏', badge:'精选',
+      style_desc:'clean clinical wellness photography, soft blue-white gradient background, precise symmetric product layout, trust-building purity visual language, minimalist scientific aesthetic, crisp detail' },
+  ],
+  '食品': [
+    { bg: BG('https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445'), cat:'FOOD', brand:'ARTISAN', sub:'手工精酿巧克力', platforms:'小红书 · Instagram', stat:'3.6K 收藏', badge:'热门 #1',
+      style_desc:'dark moody artisan food photography, dramatic single-source chiaroscuro lighting, rich deep chocolate and espresso tones, rough stone and dark wood surfaces, handcrafted luxury aesthetic' },
+    { bg: BG('https://images.unsplash.com/photo-1546069057-ba4821e7f3ec'), cat:'FOOD', brand:'HARVEST', sub:'有机全麦早餐', platforms:'抖音 · 小红书', stat:'2.8K 收藏', badge:'爆款',
+      style_desc:'bright wholesome food flat-lay, clean natural daylight from above, earthy grain and wheat tones, rustic linen and ceramic textures, farm-to-table organic aesthetic, warm inviting' },
+    { bg: BG('https://images.unsplash.com/photo-1482049016823-3f5cae9a0c7c'), cat:'FOOD', brand:'CAFÉ ORA', sub:'精品单品咖啡豆', platforms:'Instagram · 微博', stat:'4.1K 收藏', badge:'新品',
+      style_desc:'warm amber morning coffee shop editorial, soft hazy backlight through steam, rich caramel and espresso tones, artisan barista aesthetic, bokeh café background, cozy premium atmosphere' },
+    { bg: BG('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38'), cat:'FOOD', brand:'NOMA', sub:'北欧风味餐前套', platforms:'小红书 · Facebook', stat:'1.5K 收藏', badge:'精选',
+      style_desc:'Nordic minimalist fine dining photography, stark white ceramic plating, precise geometric composition, cold clean blue-white lighting, negative space dominance, Michelin-star editorial elegance' },
+  ],
+};
+
+let CARDS = CATEGORY_CARDS['全部'];
+let discoverIdx = 0;
+let discoverAnimating = false;
+
+async function loadDiscoverFromAPI() {
+  try {
+    const resp = await fetch('/api/discover');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data || Object.keys(data).length === 0) return;
+    for (const [cat, ads] of Object.entries(data)) {
+      if (!ads || ads.length === 0) continue;
+      CATEGORY_CARDS[cat] = ads.map(ad => ({
+        bg: BG_RAW(ad.thumb_url || ad.image_url),
+        cat: ad.cat_label || cat.toUpperCase(),
+        brand: ad.brand || '',
+        sub: ad.sub || '',
+        platforms: ad.platforms || '',
+        stat: ad.stat || '',
+        badge: ad.badge || '',
+        style_desc: ad.style_desc || '',
+      }));
+    }
+    CARDS = CATEGORY_CARDS['全部'];
+    discoverIdx = 0;
+    applyDiscoverCards();
+  } catch(e) {
+    // silently fall back to hardcoded cards
+  }
+}
+
+function applyDiscoverCards() {
+  const c0 = CARDS[0];
+  if (!c0) return;
+  const front = document.getElementById('dc-0');
+  front.style.background = c0.bg;
+  document.getElementById('dc-source').textContent = '来源：Pinterest';
+  ['dc-3','dc-2','dc-1'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    const d = CARDS[(i + 1) % CARDS.length];
+    el.style.background = d.bg;
+    el.querySelector('[data-field="preview-cat"]').textContent = d.cat;
+    el.querySelector('[data-field="preview-brand"]').textContent = d.brand;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadDiscoverFromAPI);
+
+function cycleDiscover() {
+  if (discoverAnimating) return;
+  discoverAnimating = true;
+
+  const front = document.getElementById('dc-0');
+  const second = document.getElementById('dc-1');
+
+  // Exit: snappy ease-in with scale + blur
+  front.style.transition = 'transform 0.26s cubic-bezier(0.55,0,1,0.45), opacity 0.22s ease-in, filter 0.26s ease-in';
+  front.style.transform = 'translateX(108%) rotate(14deg) scale(0.88)';
+  front.style.opacity = '0';
+  front.style.filter = 'blur(3px)';
+
+  // Second card subtly lifts
+  second.style.transition = 'transform 0.26s cubic-bezier(0.34,1.4,0.64,1)';
+  second.style.transform = 'scale(1.02) translateY(-3px)';
+
+  setTimeout(() => {
+    discoverIdx = (discoverIdx + 1) % CARDS.length;
+    const c = CARDS[discoverIdx];
+
+    // Update front card
+    front.style.background = c.bg;
+    document.getElementById('dc-source').textContent = '来源：Pinterest';
+
+    // Update back cards (deepest to shallowest order)
+    const nextCards = CARDS.slice(discoverIdx + 1).concat(CARDS.slice(0, discoverIdx));
+    ['dc-3','dc-2','dc-1'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      const d = nextCards[i % nextCards.length];
+      el.style.background = d.bg;
+      el.querySelector('[data-field="preview-cat"]').textContent = d.cat;
+      el.querySelector('[data-field="preview-brand"]').textContent = d.brand;
+    });
+
+    second.style.transform = '';
+
+    // Snap off-left, then spring entry
+    front.style.transition = 'none';
+    front.style.transform = 'translateX(-22%) rotate(-7deg) scale(0.93)';
+    front.style.opacity = '0';
+    front.style.filter = 'blur(4px)';
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      front.style.transition = 'transform 0.54s cubic-bezier(0.34,1.56,0.64,1), opacity 0.30s ease-out, filter 0.30s ease-out';
+      front.style.transform = 'translateX(0) rotate(0deg) scale(1)';
+      front.style.opacity = '1';
+      front.style.filter = 'blur(0px)';
+      setTimeout(() => { discoverAnimating = false; }, 560);
+    }));
+  }, 270);
+}
+
+function switchBriefTab(tab) {
+  const isImg = tab === 'img';
+  document.getElementById('brief-panel-img').style.display = isImg ? '' : 'none';
+  document.getElementById('brief-panel-url').style.display = isImg ? 'none' : '';
+  const tabImg = document.getElementById('brief-tab-img');
+  const tabUrl = document.getElementById('brief-tab-url');
+  tabImg.style.background = isImg ? '#fff' : 'transparent';
+  tabImg.style.color = isImg ? '#0c0c0c' : 'rgba(255,255,255,0.45)';
+  tabImg.style.fontWeight = isImg ? '600' : '500';
+  tabUrl.style.background = isImg ? 'transparent' : '#fff';
+  tabUrl.style.color = isImg ? 'rgba(255,255,255,0.45)' : '#0c0c0c';
+  tabUrl.style.fontWeight = isImg ? '500' : '600';
+}
+
+function filterCategory(el, cat) {
+  // Update chip styles
+  document.querySelectorAll('.fchip').forEach(c => {
+    c.style.background = 'rgba(255,255,255,0.08)';
+    c.style.color = 'rgba(255,255,255,0.6)';
+    c.style.fontWeight = '600';
+  });
+  el.style.background = '#fff';
+  el.style.color = '#0c0c0c';
+  el.style.fontWeight = '700';
+
+  CARDS = CATEGORY_CARDS[cat];
+  discoverIdx = 0;
+
+  const stack = document.getElementById('discover-stack');
+  stack.style.transition = 'opacity 0.18s ease-out';
+  stack.style.opacity = '0';
+
+  setTimeout(() => {
+    const front = document.getElementById('dc-0');
+    const c0 = CARDS[0];
+    front.style.background = c0.bg;
+    document.getElementById('dc-source').textContent = '来源：Pinterest';
+
+    ['dc-3','dc-2','dc-1'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      const d = CARDS[(i + 1) % CARDS.length];
+      el.style.background = d.bg;
+      el.querySelector('[data-field="preview-cat"]').textContent = d.cat;
+      el.querySelector('[data-field="preview-brand"]').textContent = d.brand;
+    });
+
+    stack.style.transition = 'opacity 0.22s ease-in';
+    stack.style.opacity = '1';
+  }, 200);
+}
+
+// ── 通知系统 ──
+const NOTIF_ICONS = {
+  ad:     { bg:'rgba(200,224,64,0.12)',  stroke:'var(--accent)', svg:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
+  resize: { bg:'rgba(74,222,128,0.10)',  stroke:'#4ade80',       svg:'<polyline points="20 6 9 17 4 12"/>' },
+  style:  { bg:'rgba(167,139,250,0.12)', stroke:'#a78bfa',       svg:'<circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>' },
+  system: { bg:'rgba(251,113,133,0.08)', stroke:'#fb7185',       svg:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' },
+};
+
+function addNotif(type, title, body){
+  const notifs = _getNotifs();
+  notifs.unshift({ id: Date.now(), type, title, body, read: false, timestamp: Date.now() });
+  localStorage.setItem('admind_notifs', JSON.stringify(notifs.slice(0, 30)));
+  updateNotifBadge();
+}
+
+function _getNotifs(){
+  try { return JSON.parse(localStorage.getItem('admind_notifs')||'[]'); } catch(e){ return []; }
+}
+
+function updateNotifBadge(){
+  const hasUnread = _getNotifs().some(n => !n.read);
+  document.getElementById('notif-badge').style.display = hasUnread ? 'block' : 'none';
+}
+
+function _timeAgo(ts){
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  if(m < 1) return '刚刚';
+  if(m < 60) return `${m}分钟前`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `${h}小时前`;
+  const d = Math.floor(h/24);
+  if(d === 1) return '昨天';
+  if(d < 7) return `${d}天前`;
+  return new Date(ts).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+}
+
+function renderNotifs(){
+  const notifs = _getNotifs();
+  // Mark all as read
+  notifs.forEach(n => n.read = true);
+  localStorage.setItem('admind_notifs', JSON.stringify(notifs));
+  updateNotifBadge();
+
+  const el = document.getElementById('notif-scroll');
+  if(notifs.length === 0){
+    el.innerHTML = `<div style="text-align:center;padding:64px 0;font-size:13px;color:rgba(255,255,255,0.25);">暂无消息</div>`;
+    return;
+  }
+
+  el.innerHTML = notifs.map(n => {
+    const ic = NOTIF_ICONS[n.type] || NOTIF_ICONS.system;
+    return `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="width:44px;height:44px;border-radius:13px;background:${ic.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${ic.stroke}" stroke-width="2" stroke-linecap="round">${ic.svg}</svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="font-size:13px;font-weight:600;color:#fff;">${n.title}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);flex-shrink:0;margin-left:8px;">${_timeAgo(n.timestamp)}</div>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.body}</div>
+      </div>
+    </div>`;
+  }).join('') + '<div style="height:24px;"></div>';
+}
+
+function clearNotifs(){
+  localStorage.removeItem('admind_notifs');
+  updateNotifBadge();
+  renderNotifs();
+}
+
+function updateStyleSlider(el) {
+  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+  const valEl = document.getElementById('styleIntensityVal');
+  if (valEl) valEl.textContent = Math.round(pct) + '%';
+}
+
+// Init slider fill on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const sl = document.getElementById('styleIntensitySlider');
+  if (sl) updateStyleSlider(sl);
+
+  // First visit welcome notification
+  if(!localStorage.getItem('admind_welcomed')){
+    addNotif('system', '欢迎使用 Adspire', '开始创作你的第一个 AI 广告方案');
+    localStorage.setItem('admind_welcomed', '1');
+  }
+  updateNotifBadge();
+});
+
+// ── 项目列表 ──
+function renderMineProjects(){
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+
+  const q = (document.getElementById('mine-search')?.value||'').toLowerCase();
+  const filtered = q ? ads.filter(a => (a.product_name||'').toLowerCase().includes(q) || (a.platform_label||'').toLowerCase().includes(q)) : ads;
+
+  document.getElementById('mine-count').textContent = `${ads.length} 个项目`;
+  document.getElementById('mine-chip-count').textContent = ads.length;
+
+  const el = document.getElementById('mine-list');
+  if(ads.length === 0){
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0;">
+        <div style="font-size:22px;font-weight:700;color:var(--t1);margin-bottom:10px;letter-spacing:-0.5px;">还没有项目</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.35);line-height:1.8;text-align:center;">生成广告后会自动出现在这里</div>
+      </div>`;
+    return;
+  }
+  if(filtered.length === 0){
+    el.innerHTML = `<div style="text-align:center;padding:40px 0;font-size:13px;color:rgba(255,255,255,0.3);">没有匹配的项目</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(ad => {
+    const grad = MOOD_GRAD[ad.color_mood] || '1e293b,475569';
+    const date = new Date(ad.timestamp).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    const badge = ad.launched
+      ? `<span style="font-size:9px;font-weight:600;color:#4ade80;background:rgba(74,222,128,0.12);border-radius:6px;padding:2px 7px;">已投放</span>`
+      : '';
+    const idVal = ad.id || ad.timestamp;
+    return `
+    <div onclick="openProjectDetail(${idVal})" style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;">
+      <div style="width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,${grad});flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ad.product_name}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">${ad.platform_label} · ${date}</div>
+        <div style="margin-top:5px;">${badge}</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+}
+
+// ── 投放记录 ──
+let _currentAdId = null;
+let _launchTargetId = null;
+
+const MOOD_GRAD = {
+  '玫瑰粉': '#fde8f0,#c35f87', '深邃黑': '#1a1a2e,#3d3d6b',
+  '活力橙': '#7c2d00,#ea580c', '清透白': '#1e3a5f,#60a5fa',
+  '奶油米': '#5c3d11,#d97706', '薰衣草': '#3b0764,#a855f7',
+  '湖水蓝': '#0c4a6e,#38bdf8', '森林绿': '#14532d,#4ade80',
+};
+const MOOD_ACCENT = {
+  '玫瑰粉': {solid:'#d4476a', panel:'rgba(105,20,52,0.94)'},
+  '深邃黑': {solid:'#7070c8', panel:'rgba(14,14,38,0.94)'},
+  '活力橙': {solid:'#e05820', panel:'rgba(95,32,5,0.94)'},
+  '清透白': {solid:'#4a9fd4', panel:'rgba(8,30,62,0.94)'},
+  '奶油米': {solid:'#c4a060', panel:'rgba(55,36,10,0.94)'},
+  '薰衣草': {solid:'#9060d0', panel:'rgba(42,18,82,0.94)'},
+  '湖水蓝': {solid:'#2290c8', panel:'rgba(5,35,65,0.94)'},
+  '森林绿': {solid:'#30965a', panel:'rgba(8,40,22,0.94)'},
+};
+function getMoodAccent(mood){
+  for(const k in MOOD_ACCENT){ if((mood||'').includes(k)) return MOOD_ACCENT[k]; }
+  return {solid:'#6473a0', panel:'rgba(16,20,48,0.94)'};
+}
+
+function renderLaunchRecords() {
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+
+  const launched = ads.filter(a => a.launched);
+  const totalBudget = launched.reduce((s, a) => s + (parseFloat(a.budget)||0), 0);
+
+  const summaryEl = document.getElementById('launch-summary');
+  if(launched.length === 0){
+    summaryEl.style.gridTemplateColumns = '1fr';
+    summaryEl.innerHTML = `
+      <div style="background:var(--s2);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:8px;">广告方案</div>
+          <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${ads.length} <span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.3);">套已生成</span></div>
+        </div>
+      </div>`;
+  } else {
+    summaryEl.style.gridTemplateColumns = '1fr 1fr';
+    summaryEl.innerHTML = `
+      <div style="background:var(--s2);border-radius:16px;padding:16px;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:8px;">广告方案</div>
+        <div style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${ads.length}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">已生成</div>
+      </div>
+      <div style="background:var(--s2);border-radius:16px;padding:16px;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:8px;">累计预算</div>
+        <div style="font-size:26px;font-weight:800;color:#4ade80;letter-spacing:-0.5px;">¥${totalBudget.toLocaleString()}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">${launched.length} 条已投放</div>
+      </div>`;
+  }
+
+  const el = document.getElementById('launch-records');
+  if(ads.length === 0){
+    el.innerHTML = `<div style="text-align:center;padding:56px 0;color:rgba(255,255,255,0.25);font-size:12px;line-height:1.8;">还没有广告方案<br>生成广告后会显示在这里</div>`;
+    return;
+  }
+
+  el.innerHTML = ads.map(ad => {
+    const id = ad.id || ad.timestamp;
+    const grad = MOOD_GRAD[ad.color_mood] || '1e293b,475569';
+    const genDate = new Date(ad.timestamp).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
+    if(ad.launched){
+      return `
+      <div style="background:var(--s2);border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;">
+        ${ad.thumb ? `<img src="${ad.thumb}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;">` : `<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,${grad});flex-shrink:0;"></div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ad.product_name}${ad.color_mood?'·'+ad.color_mood:''}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">${ad.platform_label} · ${ad.launch_date||genDate}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:700;color:#4ade80;">¥${parseFloat(ad.budget).toLocaleString()}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;">已投放</div>
+        </div>
+      </div>`;
+    } else {
+      return `
+      <div style="background:var(--s2);border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;">
+        ${ad.thumb ? `<img src="${ad.thumb}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;opacity:0.7;">` : `<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,${grad});flex-shrink:0;opacity:0.7;"></div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ad.product_name}${ad.color_mood?'·'+ad.color_mood:''}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;">${ad.platform_label} · ${genDate} 生成</div>
+        </div>
+        <button onclick="openLaunchModal(${id})" style="flex-shrink:0;background:var(--accent-dim);border:1px solid rgba(200,224,64,0.3);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:600;color:var(--accent);cursor:pointer;">标记</button>
+      </div>`;
+    }
+  }).join('');
+}
+
+let _pdCurrentId = null;
+
+function openProjectDetail(id){
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+  const ad = ads.find(a => (a.id||a.timestamp) === id);
+  if(!ad) return;
+  _pdCurrentId = id;
+
+  const grad = MOOD_GRAD[ad.color_mood] || '1e293b,475569';
+  const date = new Date(ad.timestamp).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+
+  const pdThumb = document.getElementById('pd-thumb');
+  if(ad.thumb){
+    pdThumb.style.background = '';
+    pdThumb.innerHTML = `<img src="${ad.thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">`;
+  } else {
+    pdThumb.innerHTML = '';
+    pdThumb.style.background = `linear-gradient(135deg,${grad})`;
+  }
+  document.getElementById('pd-name').textContent = ad.product_name + (ad.color_mood ? ' · ' + ad.color_mood : '');
+  document.getElementById('pd-platform').textContent = `${ad.platform_label} · ${date}`;
+
+  const headlineEl = document.getElementById('pd-headline');
+  if(ad.headline){ headlineEl.textContent = ad.headline; headlineEl.style.display='block'; }
+  else { headlineEl.style.display='none'; }
+
+  const launchEl = document.getElementById('pd-launch-info');
+  if(ad.launched){
+    launchEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:12px 14px;">
+      <div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:3px;">已投放</div><div style="font-size:13px;font-weight:700;color:#4ade80;">¥${parseFloat(ad.budget).toLocaleString()}</div></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);">${ad.launch_date||''}</div>
+    </div>`;
+    document.getElementById('pd-mark-btn').style.display = 'none';
+  } else {
+    launchEl.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;">尚未标记投放</div>`;
+    document.getElementById('pd-mark-btn').style.display = 'block';
+  }
+
+  document.getElementById('project-detail-modal').style.display = 'block';
+}
+
+function closeProjectDetail(){
+  document.getElementById('project-detail-modal').style.display = 'none';
+  _pdCurrentId = null;
+}
+
+function restoreProject(id){
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+  const ad = ads.find(a => (a.id||a.timestamp) === id);
+  if(!ad) return;
+
+  const hasCopies = ad.copies && ad.copies.length > 0;
+  const hasImages = ad.images && ad.images.length > 0;
+  if(!hasCopies && !hasImages){
+    alert('此项目是在旧版本生成的，完整方案未保存。\n重新生成后可查看完整内容。');
+    return;
+  }
+
+  closeProjectDetail();
+  _currentAdId = id;
+
+  const plt = Object.values(PLATFORMS).find(p => p.label === ad.platform_label) || PLATFORMS.instagram;
+  document.getElementById('out-product-name').textContent = ad.product_name || '产品';
+  document.getElementById('out-meta-info').textContent = `2 套创意 · ${ad.platform_label}`;
+
+  if(ad.copies && ad.copies.length){ _lastCopies = ad.copies; renderAdCopies(ad.copies); }
+  if(ad.strategy) renderAdStrategy(ad.strategy);
+
+  _lastGenerated = ad.images || [];
+
+  const wrap = document.getElementById('ad-images-wrap');
+  wrap.innerHTML = '';
+  document.getElementById('out-ad-creative').style.display = _lastGenerated.length ? 'block' : 'none';
+
+  if(_lastGenerated.length){
+    const labels = ['场景一','场景二'];
+    _lastGenerated.forEach((b64, i) => {
+      const card = document.createElement('div');
+      card.style.cssText = 'margin-bottom:14px;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.5);';
+      card.innerHTML = `
+        <div style="font-size:10px;color:var(--t2);padding:7px 12px;background:var(--s2);">创意 ${i+1} · ${labels[i]||''}</div>
+        <img src="data:image/jpeg;base64,${b64}" style="width:100%;display:block;">`;
+      wrap.appendChild(card);
+    });
+  } else {
+    wrap.innerHTML = `<div style="text-align:center;padding:32px 0;font-size:12px;color:var(--t3);">图片仅保留最近 8 条记录，此项目图片已过期</div>`;
+    document.getElementById('out-ad-creative').style.display = 'block';
+  }
+
+  goTo('s-output');
+}
+
+function openLaunchModal(id){
+  if(!id){ alert('请先生成广告'); return; }
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+  const ad = ads.find(a => (a.id||a.timestamp) === id);
+  if(!ad) return;
+  _launchTargetId = id;
+  document.getElementById('launch-modal-subtitle').textContent = `${ad.product_name} · ${ad.platform_label}`;
+  document.getElementById('launch-modal-platform').textContent = ad.platform_label;
+  document.getElementById('launch-budget-input').value = '';
+  document.getElementById('launch-date-input').value = new Date().toISOString().split('T')[0];
+  document.getElementById('launch-modal').style.display = 'block';
+}
+
+function closeLaunchModal(){
+  document.getElementById('launch-modal').style.display = 'none';
+  _launchTargetId = null;
+}
+
+function confirmLaunch(){
+  const budget = parseFloat(document.getElementById('launch-budget-input').value);
+  const date = document.getElementById('launch-date-input').value;
+  if(!budget || budget <= 0){ alert('请输入有效预算金额'); return; }
+  let ads = [];
+  try { ads = JSON.parse(localStorage.getItem('admind_ads')||'[]'); } catch(e){}
+  const idx = ads.findIndex(a => (a.id||a.timestamp) === _launchTargetId);
+  if(idx !== -1){
+    ads[idx].launched = true;
+    ads[idx].budget = budget;
+    ads[idx].launch_date = date;
+    localStorage.setItem('admind_ads', JSON.stringify(ads));
+  }
+  closeLaunchModal();
+  renderLaunchRecords();
+}
+</script>
+<!-- ═══════════════════════════════════════
+     隐藏广告模板容器（html2canvas 渲染用）
+═══════════════════════════════════════ -->
+<div id="ad-tpl-wrap" style="position:fixed;left:-9999px;top:0;pointer-events:none;">
+
+  <!-- ── 模板1：全图 · 底部巨型标题 · 竖向 Accent 条 ── -->
+  <div id="tpl-1" style="width:400px;height:400px;background:#06060e;box-sizing:border-box;font-family:'Noto Sans SC','PingFang SC',sans-serif;position:relative;overflow:hidden;">
+    <img id="t1-img" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+    <!-- Aggressive cinematic bottom gradient -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(3,3,10,1) 0%,rgba(3,3,10,0.9) 24%,rgba(3,3,10,0.5) 46%,rgba(3,3,10,0.08) 68%,transparent 100%);"></div>
+    <!-- Left side vignette -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(3,3,10,0.45) 0%,transparent 55%);"></div>
+    <!-- Mood accent vertical bar -->
+    <div id="t1-accent-bar" style="position:absolute;bottom:28px;left:24px;width:3.5px;height:108px;border-radius:2px;background:#6473a0;"></div>
+    <!-- Text block beside bar -->
+    <div style="position:absolute;bottom:0;left:40px;right:22px;padding-bottom:30px;">
+      <div id="t1-product-label" style="font-size:7.5px;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,0.38);text-transform:uppercase;margin-bottom:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <div id="t1-headline" style="font-size:56px;font-weight:900;color:#fff;line-height:0.93;letter-spacing:-1.5px;margin-bottom:13px;word-break:break-all;"></div>
+      <div style="width:100%;height:1px;background:rgba(255,255,255,0.1);margin-bottom:11px;"></div>
+      <div id="t1-tagline" style="font-size:11px;font-weight:300;color:rgba(255,255,255,0.58);line-height:1.65;letter-spacing:0.5px;"></div>
+    </div>
+  </div>
+
+  <!-- ── 模板2：全图 · 品牌色底部色块 ── -->
+  <div id="tpl-2" style="width:400px;height:400px;background:#06060e;box-sizing:border-box;font-family:'Noto Sans SC','PingFang SC',sans-serif;position:relative;overflow:hidden;">
+    <img id="t2-img" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+    <!-- Subtle top gradient -->
+    <div style="position:absolute;top:0;left:0;right:0;height:90px;background:linear-gradient(to bottom,rgba(3,3,10,0.55) 0%,transparent 100%);"></div>
+    <!-- Gradient bridge into panel -->
+    <div id="t2-panel-gradient" style="position:absolute;left:0;right:0;bottom:158px;height:90px;background:linear-gradient(to bottom,transparent,rgba(16,20,48,0.94));"></div>
+    <!-- Solid brand-color panel -->
+    <div id="t2-color-panel" style="position:absolute;left:0;right:0;bottom:0;height:162px;background:rgba(16,20,48,0.94);"></div>
+    <!-- Panel text -->
+    <div style="position:absolute;left:0;right:0;bottom:0;height:162px;padding:16px 24px 22px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-end;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px;">
+        <div id="t2-accent-bar" style="width:22px;height:2.5px;border-radius:2px;background:#6473a0;flex-shrink:0;"></div>
+        <div id="t2-product-label" style="font-size:7.5px;font-weight:700;letter-spacing:3.5px;color:rgba(255,255,255,0.48);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
+      <div id="t2-headline" style="font-size:44px;font-weight:900;color:#fff;line-height:0.95;letter-spacing:-1.1px;margin-bottom:9px;word-break:break-all;"></div>
+      <div id="t2-tagline" style="font-size:11px;font-weight:300;color:rgba(255,255,255,0.62);line-height:1.5;letter-spacing:0.4px;"></div>
+    </div>
+  </div>
+
+  <!-- ── 模板3：全图 · 右侧编辑竖栏 ── -->
+  <div id="tpl-3" style="width:400px;height:400px;background:#06060e;box-sizing:border-box;font-family:'Noto Sans SC','PingFang SC',sans-serif;position:relative;overflow:hidden;">
+    <img id="t3-img" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+    <!-- Overall dark veil -->
+    <div style="position:absolute;inset:0;background:rgba(3,3,10,0.32);"></div>
+    <!-- Right dark panel -->
+    <div style="position:absolute;top:0;right:0;bottom:0;width:46%;background:rgba(5,5,15,0.88);border-left:1px solid rgba(255,255,255,0.05);"></div>
+    <!-- Right text column -->
+    <div style="position:absolute;top:0;right:0;bottom:0;width:46%;display:flex;flex-direction:column;justify-content:center;padding:24px 18px 24px 20px;box-sizing:border-box;">
+      <div id="t3-product-label" style="font-size:7px;font-weight:700;letter-spacing:3.5px;color:rgba(255,255,255,0.32);text-transform:uppercase;margin-bottom:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <div id="t3-accent-bar" style="width:20px;height:2.5px;border-radius:2px;background:#6473a0;margin-bottom:11px;"></div>
+      <div id="t3-headline" style="font-size:30px;font-weight:900;color:#fff;line-height:1.05;letter-spacing:-0.3px;margin-bottom:10px;"></div>
+      <div style="width:100%;height:1px;background:rgba(255,255,255,0.07);margin-bottom:9px;"></div>
+      <div id="t3-tagline" style="font-size:10px;font-weight:300;color:rgba(255,255,255,0.56);line-height:1.65;letter-spacing:0.4px;margin-bottom:11px;"></div>
+      <div id="t3-features-list" style="display:flex;flex-direction:column;gap:7px;"></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
