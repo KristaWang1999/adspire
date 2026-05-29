@@ -647,11 +647,27 @@ def discover():
     categories = ['护肤', '科技', '时尚', '健康', '食品']
     result = {}
     all_ads = []
+
+    # Build base URL from current request so images resolve on any host
+    base = request.host_url.rstrip('/')
+
+    def fix_url(url):
+        if not url:
+            return url
+        # Replace any hardcoded localhost origin with current host
+        import re
+        return re.sub(r'https?://[^/]+(/ad/)', base + r'\1', url)
+
     for cat in categories:
         rows = conn.execute(
             'SELECT * FROM ads WHERE category=? ORDER BY RANDOM() LIMIT 8', (cat,)
         ).fetchall()
-        ads = [dict(r) for r in rows]
+        ads = []
+        for r in rows:
+            d = dict(r)
+            d['image_url'] = fix_url(d.get('image_url'))
+            d['thumb_url'] = fix_url(d.get('thumb_url'))
+            ads.append(d)
         if ads:
             result[cat] = ads
             all_ads.extend(ads[:2])
